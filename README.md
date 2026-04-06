@@ -118,6 +118,18 @@ Converts an integer to the additive rovás numeral system.
 
 **Returns:** `string` — Rovás numeral sequence
 
+### `rovasToNumber(rovasNum)`
+
+Converts a rovás numeral sequence back to an integer.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `rovasNum` | `string` | Rovás numeral Unicode string |
+
+**Returns:** `number` — Integer value
+
+> ⚠️ **Known limitation:** Reliable for values up to **999,999**. Numbers of 1,000,000 and above are generated correctly by `numberToRovas()`, but the reverse conversion (`rovasToNumber`) may return incorrect results due to multi-level multiplier nesting. Fix planned for v1.1.
+
 ### Configuration
 
 ```typescript
@@ -198,6 +210,7 @@ The conversion rules are fully documented in [SPEC.md](./SPEC.md) (Hungarian, v1
 - [x] v1.0 — Rovás numerals
 - [x] v1.0 — Vowel harmony K-selection
 - [x] v1.0 — Web demo (GitHub Pages)
+- [ ] v1.1 — Fix `rovasToNumber` for numbers ≥ 1,000,000
 - [ ] v2.0 — Ligature signs (*bogárjelek*) support
 - [ ] v2.0 — PWA (installable web app)
 - [ ] v2.0 — Android APK
