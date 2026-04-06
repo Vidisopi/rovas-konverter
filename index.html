@@ -346,6 +346,24 @@
       opacity: 1;
     }
 
+    /* Warning sáv */
+    .warning-bar {
+      margin-top: 0.75rem;
+      padding: 0.6rem 1rem;
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: #fbbf24;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .warning-bar.visible {
+      display: flex;
+    }
+
     /* Footer */
     footer {
       padding: 1rem 2rem;
@@ -438,6 +456,9 @@
         <span class="char-count" id="outputCount">0 jel</span>
       </div>
       <div class="rovas-output empty" id="outputText">A kimenet itt jelenik meg</div>
+      <div class="warning-bar" id="warningBar">
+        ⚠️ A visszafejtés (rovás → szám) 1 000 000 felett nem megbízható. A megjelenített rovásjelek helyesek.
+      </div>
       <div class="action-bar">
         <button class="btn" onclick="copyOutput()">⎘ Másolás</button>
         <button class="btn btn-primary" onclick="copyCodepoints()">U+ Kódpontok</button>
@@ -478,11 +499,13 @@
     const input = document.getElementById('inputText').value;
     const output = document.getElementById('outputText');
     const count = document.getElementById('outputCount');
+    const warning = document.getElementById('warningBar');
 
     if (!input.trim()) {
       output.textContent = 'A kimenet itt jelenik meg';
       output.classList.add('empty');
       count.textContent = '0 jel';
+      warning.classList.remove('visible');
       return;
     }
 
@@ -496,6 +519,11 @@
 
       output.textContent = result;
       output.classList.remove('empty');
+
+      // Figyelmeztetés: szám > 1 000 000 a bemenetben?
+      const numbers = input.match(/\d+/g);
+      const hasLargeNumber = numbers && numbers.some(s => parseInt(s, 10) >= 1000000);
+      warning.classList.toggle('visible', currentMode === 'latin-to-rovas' && !!hasLargeNumber);
       output.style.fontFamily = currentMode === 'latin-to-rovas'
         ? "'Noto Sans Old Hungarian', serif"
         : "'Inter', sans-serif";
