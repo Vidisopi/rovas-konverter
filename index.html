@@ -416,7 +416,7 @@
     <!-- Input -->
     <div class="panel">
       <div class="panel-header">
-        <span class="panel-title">Latin bemenet</span>
+        <span class="panel-title" id="inputTitle">🇭🇺 Latin bemenet</span>
         <span class="char-count" id="inputCount">0 karakter</span>
       </div>
       <textarea id="inputText" placeholder="Írj ide magyar szöveget...&#10;&#10;Pl: A régi magyarok rovásírással írtak."></textarea>
@@ -434,7 +434,7 @@
     <!-- Output -->
     <div class="panel">
       <div class="panel-header">
-        <span class="panel-title" id="outputTitle">Rovás kimenet</span>
+        <span class="panel-title" id="outputTitle">𐳢 Rovás kimenet</span>
         <span class="char-count" id="outputCount">0 jel</span>
       </div>
       <div class="rovas-output empty" id="outputText">A kimenet itt jelenik meg</div>
@@ -539,16 +539,27 @@
   window.swapDirection = function() {
     const inputEl = document.getElementById('inputText');
     const outputEl = document.getElementById('outputText');
-    const current = inputEl.value;
     const converted = outputEl.textContent;
 
     if (currentMode === 'latin-to-rovas') {
       currentMode = 'rovas-to-latin';
-      document.getElementById('outputTitle').textContent = 'Latin kimenet';
+      document.getElementById('inputTitle').textContent = '𐳢 Rovás bemenet';
+      document.getElementById('outputTitle').textContent = '🇭🇺 Latin kimenet';
+      inputEl.placeholder = 'Illeszd be ide a rovás szöveget...';
+      inputEl.style.fontFamily = "'Noto Sans Old Hungarian', serif";
+      inputEl.style.fontSize = '1.3rem';
+      inputEl.style.direction = 'rtl';
       outputEl.style.direction = 'ltr';
+      outputEl.style.fontFamily = "'Inter', sans-serif";
+      outputEl.style.fontSize = '1rem';
     } else {
       currentMode = 'latin-to-rovas';
-      document.getElementById('outputTitle').textContent = 'Rovás kimenet';
+      document.getElementById('inputTitle').textContent = '🇭🇺 Latin bemenet';
+      document.getElementById('outputTitle').textContent = '𐳢 Rovás kimenet';
+      inputEl.placeholder = 'Írj ide magyar szöveget...\n\nPl: A régi magyarok rovásírással írtak.';
+      inputEl.style.fontFamily = "'Inter', sans-serif";
+      inputEl.style.fontSize = '1rem';
+      inputEl.style.direction = 'ltr';
     }
 
     if (converted && !outputEl.classList.contains('empty')) {
