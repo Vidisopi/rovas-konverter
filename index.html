@@ -155,6 +155,44 @@
       background: var(--border);
     }
 
+    .bug-row {
+      flex-basis: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      align-items: center;
+      padding-top: 0.35rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .field select {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.35rem 0.55rem;
+      font-size: 0.82rem;
+      font-family: inherit;
+    }
+
+    .field select:disabled {
+      opacity: 0.45;
+    }
+
+    .bug-hint {
+      flex-basis: 100%;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      max-width: 70rem;
+    }
+
     /* Direction switch */
     .direction-switch {
       display: flex;
@@ -414,6 +452,51 @@
         <button class="direction-btn" id="modeDecompose" onclick="setMode('decompose')">Feloldás</button>
       </div>
     </div>
+
+    <div class="bug-row">
+      <label class="field" title="A hat homorgán nazális (AMB, ENC, AND, UNK, EMP, ENT) külön Unicode-betű, nem ZWJ-s összerovás. Kikapcsolva a latin szöveg betűnként megy át; a már beírt jel mássalhangzó-kapcsolatként (mb, nt) olvasódik, magánhangzó hozzátoldása nélkül.">
+        <span class="toggle-label">Homorgán nazális</span>
+        <select id="homorganicMode">
+          <option value="off" selected>Ki</option>
+          <option value="traditional">Hagyományos név (amb, ent, ant, int)</option>
+          <option value="cluster">Mássalhangzó-kapcsolat (mb, nt)</option>
+        </select>
+      </label>
+
+      <label class="field" title="Csak a hagyományos név visszafejtésében számít. Az ENT ugyanaz a jel ent, ant és int értékkel is; a latin visszaírás egy magánhangzót választ.">
+        <span class="toggle-label">ENT magánhangzója</span>
+        <select id="entVowel" disabled>
+          <option value="e" selected>e (ent)</option>
+          <option value="a">a (ant)</option>
+          <option value="i">i (int)</option>
+        </select>
+      </label>
+
+      <label class="field" title="A Unicode neve EMP. Az omp Friedrich Klára vitatott olvasata a nikolsburgi feliratról; csak a hagyományos név módban kapcsol be.">
+        <span class="toggle-label">EMP olvasat</span>
+        <select id="empReading" disabled>
+          <option value="emp" selected>emp</option>
+          <option value="omp">omp (vitatott)</option>
+        </select>
+      </label>
+
+      <label class="field" title="Az ENT-alakú jel (U+10CF1) nem az ENT. A régi szakirodalom tprusnak nevezte; a Unicode és az N4268R szerint ez a temperius rövidítése. A hangérték bizonytalan, ezért alapból megőrizzük a karaktert.">
+        <span class="toggle-label">ENT-alakú jel</span>
+        <select id="entShapedReading">
+          <option value="preserve" selected>Megőrzés</option>
+          <option value="tprus">tprus (régi név)</option>
+          <option value="temperius">temperius</option>
+        </select>
+      </label>
+
+      <label class="toggle" title="Az US (U+10CF2) olvasata vitatott. Bekapcsolva az us betűpár a jelre cserélődik, kivéve ha a s a sz kettős betű része. Kikapcsolva a rovásjel változatlan marad.">
+        <input type="checkbox" id="toggleUsSign">
+        <span class="toggle-track"></span>
+        <span class="toggle-label">US jel</span>
+      </label>
+
+      <p class="bug-hint">A bogárjel külön kódolt betű, nem összerovás. Alapból nem helyettesítünk, és a vitatott olvasatot nem alkalmazzuk magától. A mássalhangzó-kapcsolat az „ember” és a „domb” mb-jét is bogárjelre cseréli; a hagyományos név a magánhangzót a jelbe olvassa, ezért az „antal” visszafelé „ental”, hacsak az ENT magánhangzója nem „a”.</p>
+    </div>
   </div>
 
   <!-- Converter -->
@@ -454,7 +537,7 @@
 </main>
 
 <footer>
-  <p>SPEC v1.3 · Unicode Old Hungarian (U+10C80–U+10CFF) ·
+  <p>SPEC v1.4 · Unicode Old Hungarian (U+10C80–U+10CFF) ·
   Font: <a href="https://fonts.google.com/noto/specimen/Noto+Sans+Old+Hungarian" target="_blank">Noto Sans Old Hungarian</a></p>
 </footer>
 
@@ -475,7 +558,12 @@
     useCapitals: false,
     foreignLetterMode: 'ligature',
     direction: 'rtl',
-    thousandsMode: 'multiplicative'
+    thousandsMode: 'multiplicative',
+    homorganicMode: 'off',
+    entVowel: 'e',
+    empReading: 'emp',
+    entShapedReading: 'preserve',
+    useUsSign: false
   };
 
   let currentMode = 'latin-to-rovas';
@@ -540,6 +628,42 @@
     convert();
   });
 
+  const homorganicSelect = document.getElementById('homorganicMode');
+  const entVowelSelect = document.getElementById('entVowel');
+  const empReadingSelect = document.getElementById('empReading');
+
+  function syncTraditionalFields() {
+    const traditional = homorganicSelect.value === 'traditional';
+    entVowelSelect.disabled = !traditional;
+    empReadingSelect.disabled = !traditional;
+  }
+
+  homorganicSelect.addEventListener('change', () => {
+    config.homorganicMode = homorganicSelect.value;
+    syncTraditionalFields();
+    convert();
+  });
+
+  entVowelSelect.addEventListener('change', () => {
+    config.entVowel = entVowelSelect.value;
+    convert();
+  });
+
+  empReadingSelect.addEventListener('change', () => {
+    config.empReading = empReadingSelect.value;
+    convert();
+  });
+
+  document.getElementById('entShapedReading').addEventListener('change', e => {
+    config.entShapedReading = e.target.value;
+    convert();
+  });
+
+  document.getElementById('toggleUsSign').addEventListener('change', e => {
+    config.useUsSign = e.target.checked;
+    convert();
+  });
+
   // Mód váltás
   window.setMode = function(mode) {
     config.foreignLetterMode = mode;
@@ -596,6 +720,7 @@
       'Székelyföld örök.',
       'Attila király 2026-ban él tovább.',
       'Különleges kísérlet: csodaszarvas.',
+      'Antal szent embere 2026.',
     ];
     const pick = examples[Math.floor(Math.random() * examples.length)];
     document.getElementById('inputText').value = pick;

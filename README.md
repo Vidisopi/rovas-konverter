@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 [![Élő demó](https://img.shields.io/badge/demó-élő-brightgreen)](https://vidisopi.github.io/rovas-konverter/)
 [![Unicode](https://img.shields.io/badge/Unicode-Old%20Hungarian%20U%2B10C80-blue)](https://www.unicode.org/charts/PDF/U10C80.pdf)
-[![SPEC](https://img.shields.io/badge/SPEC-v1.3-purple)](./SPEC.md)
+[![SPEC](https://img.shields.io/badge/SPEC-v1.4-purple)](./SPEC.md)
 
 Kétirányú konverter a latin betűs magyar szöveg és a **székely–magyar rovásírás** Unicode karakterei között.
 
@@ -31,6 +31,7 @@ A számoknál a hagyományos jelek (1, 5, 10, 50, 100, 1000) szorzó–összead�
 - ✅ **Idegen betűk** – `q`, `w`, `x`, `y` ligatúraként vagy feloldva
 - ✅ **Elválasztójel** – a `|` megakadályozza a téves kettősbetű-felismerést szóösszetételeknél
 - ✅ **Írásjelek** – tükrözött vessző, fordított idézőjel, fordított kérdőjel
+- ✅ **Bogárjelek** – a hat homorgán nazális, az ENT-alakú jel és az US külön Unicode-karakter; alapból nincs automatikus behelyettesítés
 - ✅ Függőség nélküli ES-modul, böngészőben és Node.js-ben is használható
 
 ---
@@ -45,19 +46,24 @@ A webes felületen kapcsolható:
 - Nagybetűk
 - **Ezresjelek szorzása (MM = 1 millió)** – alapértelmezetten bekapcsolva
 - Idegen betűk: ligatúra / feloldás
+- Homorgán nazális bogárjelek: ki / hagyományos név / mássalhangzó-kapcsolat
+- ENT magánhangzója, EMP olvasata, ENT-alakú jel, US jel
 - Irányváltás latin ↔ rovás között
 
 Ellenőrzött példák (a jelenlegi kóddal futtatva):
 
 | Latin | Rovás | Megjegyzés |
 |-------|-------|------------|
-| `magyar` | 𐳚𐳀𐳍𐳀𐳢 | alap átírás |
-| `cs` | 𐳆 | egyetlen kettősbetű-jel |
-| `kirakat` | 𐳒𐳎𐳢𐳀𐳒𐳀𐳧 | alapértelmezett magas K |
-| `kirakat` + hangrendiség | 𐳒𐳎𐳢𐳀𐳓𐳀𐳧 | a második K mély |
+| `magyar` | 𐳘𐳀𐳎𐳀𐳢 | EM + A + EGY + A + ER |
+| `cs` | 𐳆 | egyetlen ECS |
+| `kirakat` | 𐳓𐳐𐳢𐳀𐳓𐳀𐳦 | alapértelmezett EK |
+| `kirakat` + hangrendiség | 𐳓𐳐𐳢𐳀𐳔𐳀𐳦 | a második K AK |
 | `2026` | 𐳺𐳺𐳿𐳺𐳺𐳼𐳻𐳺 | rovásszám |
 | `1 000 000` | 𐳿𐳿 | multiplikatív alapértelmezés |
 | `1 000 000` additív írással | 𐳺𐳿𐳿 | explicit egyes a beágyazott ezresszorzat előtt |
+| `antal` | betűnként | bogárjel kikapcsolva; a `t` az ET (U+10CE6), nem az ENT |
+| `antal`, hagyományos név | 𐳧𐳀𐳖 | ENT + A + L; visszafelé `ental`, ha az ENT magánhangzója `e` |
+| `antal`, mássalhangzó-kapcsolat | 𐳀𐳧𐳀𐳖 | A + ENT + A + L; visszafelé `antal` |
 
 > **Font szükséges.** A jelek helyes megjelenítéséhez telepítsd a [Noto Sans Old Hungarian](https://fonts.google.com/noto/specimen/Noto+Sans+Old+Hungarian) vagy az [OldHungarian](https://oldhungarian.eu) betűtípust. A demó a Noto Sans Old Hungarian webfontot tölti be.
 
@@ -77,7 +83,7 @@ Böngészőben nyisd meg az `index.html` fájlt, vagy szolgáld ki a mappát egy
 Tesztelés:
 
 ```bash
-node --test tests/numbers.test.mjs
+node --test
 ```
 
 ---
@@ -189,10 +195,52 @@ interface RovasConverterConfig {
   direction: 'rtl' | 'ltr';       // alapértelmezés: 'rtl'
   foreignLetterMode: 'ligature' | 'decompose'; // alapértelmezés: 'ligature'
   thousandsMode: ThousandsMode;    // alapértelmezés: 'multiplicative'
+  homorganicMode: 'off' | 'traditional' | 'cluster'; // alapértelmezés: 'off'
+  entVowel: 'e' | 'a' | 'i';       // alapértelmezés: 'e'
+  empReading: 'emp' | 'omp';       // alapértelmezés: 'emp'
+  entShapedReading: 'preserve' | 'tprus' | 'temperius'; // alapértelmezés: 'preserve'
+  useUsSign: boolean;              // alapértelmezés: false
 }
 ```
 
+`rovasToLatin` ugyanazt a konfigurációt fogadja. A `thousandsMode` mellett a bogárjel-olvasatot is ez vezérli.
+
 ---
+
+## Bogárjelek
+
+A bogárjel és az összerovás nem ugyanaz. Az [Everson–Szelp N4268R](https://www.unicode.org/L2/L2012/12168r-n4268r-oldhungarian.pdf) 5. fejezete hat homorgán nazálist külön betűként ír le (AMB, ENC, AND, UNK, EMP, ENT): egy zárhangot vagy zár-réshangot és az azt megelőző, azonos képzéshelyű nazálist jelölnek, és **nem produktív ligatúrák**. A 6. fejezet összerovásai (például n+c, n+d, n+ek, n+t) választhatók, és ZWJ-vel vagy OpenType-pal kérhetők a betűtípustól. Az n+ZWJ+t sor ezért nem cserélhető fel az ENT karakterrel.
+
+A hatályos kódpontok a [Unicode 17 névjegyzékéből](https://www.unicode.org/Public/17.0.0/charts/nameslist/n_10C80.html):
+
+| Jel | Kisbetű | Nagybetű | Alap visszafejtés |
+|-----|---------|----------|-------------------|
+| AMB | U+10CC3 | U+10C83 | `mb` |
+| ENC | U+10CC5 | U+10C85 | `nc` |
+| AND | U+10CC8 | U+10C88 | `nd` |
+| UNK | U+10CD5 | U+10C95 | `nk` |
+| EMP | U+10CE1 | U+10CA1 | `mp` |
+| ENT | U+10CE7 | U+10CA7 | `nt` |
+| ENT-SHAPED SIGN | U+10CF1 | U+10CB1 | a karakter megmarad |
+| US | U+10CF2 | U+10CB2 | a karakter megmarad |
+
+Az ENT névjegyzéki megjegyzése: „also used for ant and int”. Az ENT-SHAPED SIGN nem ez a jel. A régi szakirodalom tprusnak nevezte; a névjegyzék és az N4268R szerint a nikolsburgi glossza a *temperius* rövidítése. A hangérték bizonytalan. [Friedrich Klára](https://www.rovasirasforrai.hu/Rovasiras/Csudabogarak.htm) több olvasatot vitat, köztük az EMP/OMP, az US és a TPRUS értékét; ezt a vitát a konverter nem dönti el helyettünk.
+
+Alapértelmezés:
+
+- A latin `antal`, `szent`, `tprus`, `us` betűnként megy át. A `t` az ET (U+10CE6).
+- Ha a bemenet már tartalmazza a hat nazális jelet, a visszafejtés a mássalhangzó-kapcsolat (`mb`, `nc`, `nd`, `nk`, `mp`, `nt`), magánhangzó hozzátoldása nélkül.
+- Az ENT-alakú jel és az US változatlan marad.
+
+Bekapcsolható:
+
+- `homorganicMode: 'traditional'` – `amb`, `enc`, `and`, `unk`, `emp`, `ent`, valamint az ENT `ant` és `int` használata. A magánhangzó a jelbe olvad, ezért `antal` visszafelé `ental`, hacsak `entVowel: 'a'`.
+- `homorganicMode: 'cluster'` – `mb`, `nc`, `nd`, `nk`, `mp`, `nt`. A magánhangzó külön betű marad, de az `ember` és a `domb` is bogárjelet kap.
+- `empReading: 'omp'` – csak traditional módban, Friedrich vitatott olvasata.
+- `entShapedReading: 'tprus'` vagy `'temperius'` – az ENT-alakú jel, nem az ENT.
+- `useUsSign: true` – az `us` pár, kivéve ha a `s` a `sz` kettős betű része (`plusz` változatlan).
+
+A szóközt, írásjelet és a `|` elválasztót a helyettesítés nem lépi át. A `ünk` nincs az UNK-ra kötve: erre a források nem adnak egyértelmű szabályt.
 
 ## Számírás
 
@@ -247,9 +295,13 @@ Az `IMM` mindkét olvasási módban `1 000 000`. A többi szorzóblokk változat
 - Az additív mód a kért vezető ezresfutam olvasatát kapcsolja, nem univerzális történeti parser minden iskolához.
 - A nulla üres kimenet; negatív számok nem támogatottak.
 - `Number.MAX_SAFE_INTEGER` felett `RangeError`.
-- A bogárjelek / kísérőjelek a v2.0 tervezett funkciói; lásd a SPEC 13. fejezetét.
-- A zárt ë automatikus felismerése nincs; csak manuális `ë` / `Ë` jelölés.
-- A webes demó a tároló aktuális GitHub Pages állapotát mutatja; a helyi `index.html` tartalmazza a `thousandsMode` kapcsolót.
+- A v1.4 előtt kiadott rovásszöveg más kódpontokat használt: a betűtábla kihagyta a közbeszúrt jeleket, ezért például a `t` az ENT (U+10CE7), az `e` az AND (U+10CC8) kódpontjára esett. Az ilyen régi kimenet az új táblával nem jár vissza ugyanarra a latin szóra.
+- A bogárjelek automatikus beillesztése nincs bekapcsolva. A hat nazális jel visszafejtése alapból mássalhangzó-kapcsolat; a név eleji magánhangzó, az `omp`, a `tprus`, a `temperius` és az `us` csak kérésre érvényes.
+- Az ENT `ent` / `ant` / `int` értéke egy karakter, a visszafejtés egy magánhangzót tud kiírni.
+- Az ECH (U+10CE9) olvasata vitatott (`ty` vagy `/x/`), ezért a konverter nem írja át.
+- A történeti összerovások (N4268R 6. fejezet) nincsenek automatikusan ZWJ-vel beszúrva; a `q`, `w`, `x`, `y`, `dz`, `dzs` ligatúrái a meglévő idegenbetű-szabály szerint készülnek.
+- A zárt ë automatikus felismerése nincs; csak manuális `ë` / `Ë` jelölés. A zárt és a nyílt E visszafelé egyaránt `e`.
+- A webes demó a tároló aktuális GitHub Pages állapotát mutatja; a helyi `index.html` tartalmazza a `thousandsMode` kapcsolót és a bogárjel-beállításokat.
 
 ---
 
@@ -283,7 +335,8 @@ rovas-konverter/
 │   ├── tables/
 │   └── utils/
 ├── tests/
-│   └── numbers.test.mjs
+│   ├── numbers.test.mjs
+│   └── bugsigns.test.mjs
 ├── index.html                    # Webes demó
 ├── SPEC.md                       # Teljes specifikáció (magyar)
 ├── README.md
@@ -296,32 +349,24 @@ A SPEC-ben említett `src/` / `dist/` forrásfa a fejlesztési terv része; a ny
 
 ## Specifikáció
 
-A teljes szabályrendszer a [SPEC.md](./SPEC.md) fájlban van (magyar, v1.3):
+A teljes szabályrendszer a [SPEC.md](./SPEC.md) fájlban van (magyar, v1.4):
 
 - Unicode-kódpont táblázatok
 - Kettősbetű-prioritás és mohó egyeztetés
 - Hangrendiségi K-választás
 - Számkonverzió és `thousandsMode`
 - Írásjelek és elválasztójel
-- v2.0: bogárjelek terve
+- bogárjelek és a betűkódpontok (v1.4)
 
 ---
 
 ## Tesztek
 
 ```bash
-node --test tests/numbers.test.mjs
+node --test
 ```
 
-A jelenlegi tesztek ellenőrzik:
-
-- a kis számok és a meglévő szorzatos alakok változatlanok;
-- a millió és a milliárd multiplikatív alakját;
-- a nagy számok körbe-körbe konverzióját;
-- a `RangeError` viselkedést;
-- a vezető ezresjelek kapcsolható olvasását;
-- az additív mód explicit `IMM` / `IMMM` alakját;
-- a `latinToRovas` / `rovasToLatin` továbbítását.
+A tesztek ellenőrzik a számírást (`thousandsMode`, `RangeError`, körbejárás) és a bogárjeleket: a betűk nem esnek a bogárjel-kódpontokra, alapból nincs helyettesítés, a hagyományos név és a mássalhangzó-kapcsolat külön viselkedik, az ENT és az ENT-alakú jel nem keveredik, az n+ZWJ+t nem ENT, az `omp` / `tprus` / `temperius` / `us` csak a kapcsolóval él, és a `sz` nem törik el.
 
 ---
 
@@ -332,7 +377,7 @@ A jelenlegi tesztek ellenőrzik:
 - [x] v1.0 – Hangrendiségi K-választás
 - [x] v1.0 – Webes demó (GitHub Pages)
 - [x] v1.1 / v1.3 – `rovasToNumber` javítása ≥ 1 000 000 esetén; `thousandsMode` kapcsoló
-- [ ] v2.0 – Bogárjelek / kísérőjelek
+- [x] v1.4 – Unicode-helyes betűkódpontok; bogárjelek külön karakterként, vitás olvasat csak kérésre
 - [ ] v2.0 – PWA
 - [ ] v2.0 – Android APK
 
@@ -357,10 +402,12 @@ A jelenlegi tesztek ellenőrzik:
 1. Rovás Alapítvány – korszerű egységes székely–magyar rovás jelsor
 2. [rovas.info](https://rovas.info) – betűalkalmazási szabályok (K, QWXY, DZ/DZS)
 3. [Unicode Old Hungarian táblázat](https://www.unicode.org/charts/PDF/U10C80.pdf)
-4. [Everson–Szelp N4268R](https://www.unicode.org/wg2/docs/n4268.pdf) – konszolidált Unicode-javaslat
+4. [Everson–Szelp N4268R](https://www.unicode.org/L2/L2012/12168r-n4268r-oldhungarian.pdf) – konszolidált Unicode-javaslat; a homorgán nazálisok és a ligatúrák szétválasztása
 5. [Rumi N4225](https://www.unicode.org/wg2/docs/n4225.pdf) – nem elfogadott nagyszámjel-javaslat
 6. [Friedrich Klára a számrovásról](https://www.rovasirasforrai.hu/Rovasiras/A-magyar-szamrovasrol_rovid-osszefoglalo.htm)
 7. [oldhungarian.eu](https://oldhungarian.eu) – betűtípus és ligatúra-dokumentáció
+8. [Unicode 17 Old Hungarian névjegyzék](https://www.unicode.org/Public/17.0.0/charts/nameslist/n_10C80.html) – hatályos karakternevek, az ENT és az ENT-SHAPED SIGN megjegyzései
+9. [Friedrich Klára: Csudabogarak?](https://www.rovasirasforrai.hu/Rovasiras/Csudabogarak.htm) – vitatott EMP/OMP, US és TPRUS olvasatok
 
 ---
 

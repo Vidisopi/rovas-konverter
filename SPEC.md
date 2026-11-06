@@ -1,8 +1,8 @@
 # Rovás Konverter — Spec-Driven Development Specifikáció
 
-> **Verzió**: 1.3
+> **Verzió**: 1.4
 > **Dátum**: 2026-11-06
-> **Szerző**: eredeti SPEC Claude (Anthropic) — Attila megbízásából; v1.3 számírási bővítés a kutatási patch alapján
+> **Szerző**: eredeti SPEC Claude (Anthropic) — Attila megbízásából; v1.3 számírási bővítés a kutatási patch alapján; v1.4 bogárjelek és Unicode-kódpontok
 > **Referencia**: Rovás Alapítvány korszerű egységes jelkészlete, rovas.info betűalkalmazási szabályai, Unicode Old Hungarian (U+10C80–U+10CFF)
 > **Célplatform**: TypeScript/JavaScript library (webes és CLI használatra)
 > **Metodológia**: SDD (Spec-Driven Development)
@@ -10,6 +10,7 @@
 > **Változásnapló v1.1**: Y ligatúra kódpont javítva (3.3); bogárjelek kiemelve a scope-ból → v2.0 tervezett funkció; számkonverzió millió-bejegyzés törölve (rekurzió kezeli)
 > **Változásnapló v1.2**: Vegyes hangrendű K-választás pontosítva konkrét algoritmussal és példákkal (4.4.3); bugsigns.ts kiemelve a fájlstruktúrából (10. fejezet)
 > **Változásnapló v1.3**: millió feletti számok visszafejtése; `thousandsMode` (multiplicative/additive); RangeError a biztonságos egész tartományon kívül; README magyarra
+> **Változásnapló v1.4**: a betűkódpontok a Unicode 17 névjegyzékéhez igazítva (a v1.3 tábla a közbeszúrt jeleket kihagyta, ezért a `t` az ENT, az `e` az AND kódpontján állt); a bogárjelek külön karakterek, alapból nincs automatikus helyettesítés; a vitatott olvasatok kapcsolhatók. A `thousandsMode` változatlan.
 
 ---
 
@@ -26,11 +27,12 @@ Kétirányú konverter, amely a latin betűs magyar szöveget székely-magyar ro
 - Számok konverziója mindkét irányban
 - Opcionális hangrendiség-alapú K-választás
 - Unicode Old Hungarian kódpontok használata (modern, szabványos megoldás)
+- Bogárjelek felismerése és kapcsolható helyettesítése (13. fejezet)
 
 ### 1.3 Kívül esik a scope-on
 
-- Kísérőjelek (bogárjelek) támogatása — **v2.0-ra tervezve** (a szabályrendszer dokumentálva van a 13. fejezetben, de a v1.x implementáció nem tartalmazza)
-- Összerovás (ligatúrák vizuális összevonása glyph szinten — ez a font feladata)
+- A történeti összerovások automatikus ZWJ-beszúrása (N4268R 6. fejezet; a betűtípus feladata). A `q`, `w`, `x`, `y`, `dz`, `dzs` ligatúrái megmaradnak.
+- Az ECH (U+10CE9) automatikus hangértéke
 - Zárt Ë automatikus felismerése (csak manuális jelölés támogatott)
 - Font készítés/renderelés
 - PDF generálás
@@ -43,7 +45,8 @@ Kétirányú konverter, amely a latin betűs magyar szöveget székely-magyar ro
 | Fogalom | Leírás |
 |---------|--------|
 | **Rovás** | Székely-magyar rovásírás, a magyar nyelv történeti írásrendszere |
-| **Bogárjel / Kísérőjel** | Többkarakteres összerovás, amely gyakori szótagokat vagy betűkapcsolatokat egyetlen jelben egyesít (pl. ANT, ENT, AMB) |
+| **Bogárjel** | Külön kódolt Unicode-karakter (a hat homorgán nazális, az ENT-alakú jel és az US). Nem ZWJ-s összerovás |
+| **Összerovás / ligatúra** | Választható, betűkből álló alak. OpenType vagy U+200D kérheti; az n+ZWJ+t nem az ENT |
 | **Hangrendiség** | A magyar nyelv magánhangzó-harmóniája: mély (a, á, o, ó, u, ú) vs. magas (e, é, i, í, ö, ő, ü, ű) hangrendű szavak |
 | **Mély K** | A „kapocs" alakú K rovásjel, mély hangrendű szavakban használatos |
 | **Magas K** | A „rombusz/négyszög" alakú K rovásjel, magas hangrendű szavakban használatos |
@@ -61,19 +64,19 @@ Kétirányú konverter, amely a latin betűs magyar szöveget székely-magyar ro
 |-------|-----------|----------------------|----------------------|
 | a | A | U+10CC0 | U+10C80 |
 | á | AA (Á) | U+10CC1 | U+10C81 |
-| e | E (nyílt) | U+10CC8 | U+10C88 |
-| ë | E (zárt, Ë) | U+10CC9 | U+10C89 |
-| é | É | U+10CCA | U+10C8A |
-| i | I | U+10CCE | U+10C8E |
-| í | II (Í) | U+10CCF | U+10C8F |
-| o | O | U+10CD6 | U+10C96 |
-| ó | OO (Ó) | U+10CD7 | U+10C97 |
-| ö | Ö (ÖÜ) | U+10CD8 | U+10C98 |
-| ő | ŐŰ (Ő) | U+10CD9 | U+10C99 |
-| u | U | U+10CDE | U+10C9E |
-| ú | UU (Ú) | U+10CDF | U+10C9F |
-| ü | Ü | U+10CE0 | U+10CA0 |
-| ű | ŰŐ (Ű) | U+10CE1 | U+10CA1 |
+| e | E (nyílt) | U+10CC9 | U+10C89 |
+| ë | CLOSE E (zárt) | U+10CCA | U+10C8A |
+| é | EE (É) | U+10CCB | U+10C8B |
+| i | I | U+10CD0 | U+10C90 |
+| í | II (Í) | U+10CD1 | U+10C91 |
+| o | O | U+10CDB | U+10C9B |
+| ó | OO (Ó) | U+10CDC | U+10C9C |
+| ö | RUDIMENTA OE | U+10CDE | U+10C9E |
+| ő | OEE (Ő) | U+10CDF | U+10C9F |
+| u | U | U+10CEA | U+10CAA |
+| ú | UU (Ú) | U+10CEB | U+10CAB |
+| ü | RUDIMENTA UE | U+10CED | U+10CAD |
+| ű | NIKOLSBURG UE | U+10CEC | U+10CAC |
 
 ### 3.2 Mássalhangzók
 
@@ -83,24 +86,24 @@ Kétirányú konverter, amely a latin betűs magyar szöveget székely-magyar ro
 | c | eC | U+10CC4 | U+10C84 |
 | cs | eCS | U+10CC6 | U+10C86 |
 | d | eD | U+10CC7 | U+10C87 |
-| f | eF | U+10CCB | U+10C8B |
-| g | eG | U+10CCC | U+10C8C |
-| gy | eGY | U+10CCD | U+10C8D |
-| h | eH | U+10CD0 | U+10C90 |
-| j | eJ | U+10CD1 | U+10C91 |
-| k (magas) | eK | U+10CD2 | U+10C92 |
-| k (mély) | aK | U+10CD3 | U+10C93 |
-| l | eL | U+10CD4 | U+10C94 |
-| ly | eLY | U+10CD5 | U+10C95 |
-| m | eM | U+10CDA | U+10C9A |
-| n | eN | U+10CDB | U+10C9B |
-| ny | eNY | U+10CDC | U+10C9C |
-| p | eP | U+10CDD | U+10C9D |
-| r | eR | U+10CE2 | U+10CA2 |
-| s | eS | U+10CE4 | U+10CA4 |
-| sz | eSZ | U+10CE6 | U+10CA6 |
-| t | eT | U+10CE7 | U+10CA7 |
-| ty | eTY | U+10CE8 | U+10CA8 |
+| f | EF | U+10CCC | U+10C8C |
+| g | EG | U+10CCD | U+10C8D |
+| gy | EGY | U+10CCE | U+10C8E |
+| h | EH | U+10CCF | U+10C8F |
+| j | EJ | U+10CD2 | U+10C92 |
+| k (magas) | EK | U+10CD3 | U+10C93 |
+| k (mély) | AK | U+10CD4 | U+10C94 |
+| l | EL | U+10CD6 | U+10C96 |
+| ly | ELY | U+10CD7 | U+10C97 |
+| m | EM | U+10CD8 | U+10C98 |
+| n | EN | U+10CD9 | U+10C99 |
+| ny | ENY | U+10CDA | U+10C9A |
+| p | EP | U+10CE0 | U+10CA0 |
+| r | ER | U+10CE2 | U+10CA2 |
+| s | ES | U+10CE4 | U+10CA4 |
+| sz | ESZ | U+10CE5 | U+10CA5 |
+| t | ET | U+10CE6 | U+10CA6 |
+| ty | ETY | U+10CE8 | U+10CA8 |
 | v | eV | U+10CEE | U+10CAE |
 | z | eZ | U+10CEF | U+10CAF |
 | zs | eZS | U+10CF0 | U+10CB0 |
@@ -111,12 +114,12 @@ A korszerű rovás ábécében ezek önálló jelként léteznek, Unicode-ban li
 
 | Latin | Feloldás | Unicode sorozat |
 |-------|----------|----------------|
-| dz | D + Z ligatúra | U+10CC7 + U+200D + U+10CEF |
-| dzs | D + ZS ligatúra | U+10CC7 + U+200D + U+10CF0 |
-| q | K + V ligatúra | U+10CD3 + U+200D + U+10CEE |
-| w | V + V ligatúra | U+10CEE + U+200D + U+10CEE |
-| x | K + SZ ligatúra | U+10CD3 + U+200D + U+10CE6 |
-| y | I + J ligatúra | U+10CCE + U+200D + U+10CD1 |
+| dz | ED + ZWJ + EZ | U+10CC7 + U+200D + U+10CEF |
+| dzs | ED + ZWJ + EZS | U+10CC7 + U+200D + U+10CF0 |
+| q | EK + ZWJ + EV | U+10CD3 + U+200D + U+10CEE |
+| w | EV + ZWJ + EV | U+10CEE + U+200D + U+10CEE |
+| x | EK + ZWJ + ESZ | U+10CD3 + U+200D + U+10CE5 |
+| y | I + ZWJ + EJ | U+10CD0 + U+200D + U+10CD2 |
 
 ### 3.4 Rovás számjegyek
 
@@ -136,9 +139,22 @@ A korszerű rovás ábécében ezek önálló jelként léteznek, Unicode-ban li
 | ⹁ | U+2E41 | Tükrözött vessző |
 | ⹂ | U+2E42 | Tükrözött idézőjel |
 
-### 3.6 Bogárjelek (kísérőjelek) — v2.0
+### 3.6 Bogárjelek
 
-> **Megjegyzés**: A bogárjelek (kísérőjelek) a v1.x scope-ján kívül esnek. A teljes bogárjel-táblázat, szabályrendszer és Unicode kódpont-hozzárendelés a **13. fejezetben** (Tervezett funkciók — v2.0) található. Az implementáció a v2.0 fejlesztési ciklusban történik, miután a Unicode szabvány N4268 ajánlása alapján a pontos kódpont-validáció megtörtént.
+A kódpontok a Unicode 17 névjegyzékéből valók. A szabály a 13. fejezetben van. Ezek a karakterek **nem** szerepelnek a 3.1–3.2 betűtáblában, és alapból nem helyettesítik a latin betűkapcsolatot.
+
+| Jel | Kisbetű | Nagybetű |
+|-----|---------|----------|
+| AMB | U+10CC3 | U+10C83 |
+| ENC | U+10CC5 | U+10C85 |
+| AND | U+10CC8 | U+10C88 |
+| UNK | U+10CD5 | U+10C95 |
+| EMP | U+10CE1 | U+10CA1 |
+| ENT | U+10CE7 | U+10CA7 |
+| ENT-SHAPED SIGN | U+10CF1 | U+10CB1 |
+| US | U+10CF2 | U+10CB2 |
+
+Az ö másik történeti betűje a NIKOLSBURG OE (U+10CDD / U+10C9D). A konverter ö-je a RUDIMENTA OE; mindkettő visszafelé `ö`. A SHORT ER (U+10CE3 / U+10CA3) visszafelé `r`. Az ECH (U+10CE9 / U+10CA9) olvasata nincs automatizálva.
 
 ---
 
@@ -172,7 +188,7 @@ A feldolgozásnál a leghosszabb egyezést kell keresni. A táblázat elemeit a 
 Minden egyes magánhangzó és mássalhangzó.
 Idegen betűk: `q`, `w`, `x`, `y`
 
-> **v2.0 megjegyzés**: Ha a bogárjelek bekapcsolásra kerülnek (v2.0), a prioritási lánc a bogárjel-kulcsokkal bővül (5→4→3→2 karakteres bogárjel-kulcsok a normál kulcsok ELŐTT). Lásd: 13. fejezet.
+> Ha a bogárjel-helyettesítés be van kapcsolva, a 3 betűnél hosszabb kulcs (`temperius`, `tprus`) a normál kulcsok előtt áll. A 2–3 betűs bogárjel a vele azonos hosszúságú közönséges kulcs (`cs`, `sz`, `dzs`) után következik, és nem nyúlhat bele egy kettős betűbe. Lásd: 13. fejezet.
 
 ### 4.3 Betű-konverziós tábla
 
@@ -388,9 +404,9 @@ Az alábbi karaktereknek nincs rovás megfelelőjük, ezért a konverzió során
 
 **Megjegyzés**: A `|` karakter elválasztójelként működik (lásd 4.5), nem törlendő, hanem feldolgozandó (de a kimenetre nem kerül).
 
-### 4.10 Bogárjelek (kísérőjelek) — v2.0
+### 4.10 Bogárjelek
 
-> A bogárjelek kezelése a v2.0 fejlesztési ciklusban kerül implementálásra. A teljes szabályrendszer (kombinációk, prioritás, Unicode kódpontok) a **13. fejezetben** dokumentált. A v1.x implementáció a bogárjeleket NEM kezeli — a szövegben szereplő „ant", „ent", stb. betűkapcsolatokat a normál betűkonverziós szabályok szerint dolgozza fel.
+Alapértelmezés (`homorganicMode: 'off'`, `entShapedReading: 'preserve'`, `useUsSign: false`): az `amb`, `ent`, `tprus`, `us` és a többi latin betűkapcsolat a 4.3 szabályai szerint, betűnként konvertálódik. A részletes, kapcsolható szabály a 13. fejezet.
 
 ### 4.11 Zárt Ë kezelése
 
@@ -398,7 +414,7 @@ A latin betűs magyar helyesírás nem jelöli a zárt ë hangot. A konverter a 
 
 - **Automatikus felismerés**: NEM támogatott (a specifikáció scope-ján kívül)
 - **Manuális jelölés**: A felhasználó az `ë` vagy `Ë` karaktert használhatja a bemenetben → a rendszer az E (zárt) rovás jelet (U+10CC9) adja kimenetként
-- Ha a bemenetben sima `e` áll → a nyílt E rovás jel (U+10CC8) kerül a kimenetre
+- Ha a bemenetben sima `e` áll → a nyílt E rovás jel (U+10CC9) kerül a kimenetre
 
 ---
 
@@ -421,8 +437,14 @@ KIMENET: latin betűs magyar szöveg (UTF-8 string)
 A 3.1–3.6 táblázatok inverze. Minden Unicode rovás kódpontra pontosan egy latin megfelelő van.
 
 **Speciális esetek:**
-- Mély K (U+10CD3) → `k` (a hangrendiség információja elvész, de ez a latin oldalon nem releváns)
-- Magas K (U+10CD2) → `k`
+- Mély K, AK (U+10CD4) → `k` (a hangrendiség információja elvész, de ez a latin oldalon nem releváns)
+- Magas K, EK (U+10CD3) → `k`
+- A hat homorgán nazális jel olvasata a `homorganicMode`-tól függ (13. fejezet). `off` és `cluster` esetén `mb`, `nc`, `nd`, `nk`, `mp`, `nt`.
+- ENT-SHAPED SIGN és US: `preserve` és kikapcsolt US esetén a karakter változatlan
+- NIKOLSBURG OE és RUDIMENTA OE → `ö`
+- SHORT ER (U+10CE3) → `r`
+- ECH (U+10CE9) változatlan
+- Az n+ZWJ+t és a többi, a 3.3 táblában nem szereplő ZWJ-sor nem bogárjel: a ZWJ megmarad, a betűk külön olvasódnak
 - DZ ligatúra (D+ZWJ+Z) → `dz`
 - DZS ligatúra (D+ZWJ+ZS) → `dzs`
 - Q ligatúra (K+ZWJ+V) → `q`
@@ -493,8 +515,23 @@ interface RovasConverterConfig {
   // 'decompose': feloldja a betűkapcsolatokat (Q→KV, W→VV, X→KSZ, Y→I)
   // default: 'ligature'
 
-  // v2.0-ban bővül:
-  // useBugsigns: boolean; // Kísérőjelek (bogárjelek) használata
+  // Homorgán nazálisok. default: 'off'
+  // 'off': nincs latin → rovás helyettesítés; a meglévő jel mássalhangzó-kapcsolat
+  // 'traditional': amb, enc, and, unk, emp, ent, ant, int
+  // 'cluster': mb, nc, nd, nk, mp, nt (a magánhangzó külön betű)
+  homorganicMode: 'off' | 'traditional' | 'cluster';
+
+  // traditional módban az ENT visszafejtett magánhangzója. default: 'e'
+  entVowel: 'e' | 'a' | 'i';
+
+  // traditional módban emp, vagy Friedrich vitatott omp olvasata. default: 'emp'
+  empReading: 'emp' | 'omp';
+
+  // ENT-SHAPED SIGN, nem az ENT. default: 'preserve'
+  entShapedReading: 'preserve' | 'tprus' | 'temperius';
+
+  // US jel. default: false; kikapcsolva a karakter megmarad
+  useUsSign: boolean;
 }
 ```
 
@@ -509,7 +546,7 @@ interface RovasConverterConfig {
 function latinToRovas(text: string, config?: Partial<RovasConverterConfig>): string;
 
 // Rovás → Latin konverzió
-function rovasToLatin(text: string, config?: RovasNumberOptions): string;
+function rovasToLatin(text: string, config?: Partial<RovasConverterConfig>): string;
 
 // Szám → Rovás szám
 function numberToRovas(num: number, options?: RovasNumberOptions): string;
@@ -544,10 +581,10 @@ function splitWord(text: string): string[];
 const LATIN_TO_ROVAS: Record<string, string> = {
   // Hosszú kettős betűk
   'ccs': '\u{10CC6}\u{10CC6}',
-  'ggy': '\u{10CCD}\u{10CCD}',
-  'lly': '\u{10CD5}\u{10CD5}',
-  'nny': '\u{10CDC}\u{10CDC}',
-  'ssz': '\u{10CE6}\u{10CE6}',
+  'ggy': '\u{10CCE}\u{10CCE}',
+  'lly': '\u{10CD7}\u{10CD7}',
+  'nny': '\u{10CDA}\u{10CDA}',
+  'ssz': '\u{10CE5}\u{10CE5}',
   'tty': '\u{10CE8}\u{10CE8}',
   'zzs': '\u{10CF0}\u{10CF0}',
 
@@ -556,10 +593,10 @@ const LATIN_TO_ROVAS: Record<string, string> = {
 
   // Kettős betűk
   'cs': '\u{10CC6}',
-  'gy': '\u{10CCD}',
-  'ly': '\u{10CD5}',
-  'ny': '\u{10CDC}',
-  'sz': '\u{10CE6}',
+  'gy': '\u{10CCE}',
+  'ly': '\u{10CD7}',
+  'ny': '\u{10CDA}',
+  'sz': '\u{10CE5}',
   'ty': '\u{10CE8}',
   'zs': '\u{10CF0}',
   'dz': '\u{10CC7}\u200D\u{10CEF}',
@@ -568,32 +605,32 @@ const LATIN_TO_ROVAS: Record<string, string> = {
   'qu': '\u{10CD3}\u{10CEE}', // K + V (nem ligatúra)
   'q':  '\u{10CD3}\u200D\u{10CEE}', // Q ligatúra
   'w':  '\u{10CEE}\u200D\u{10CEE}', // W ligatúra
-  'x':  '\u{10CD3}\u200D\u{10CE6}', // X ligatúra
-  'y':  '\u{10CCE}\u200D\u{10CD1}', // Y ligatúra (ha nem kettős betű része)
+  'x':  '\u{10CD3}\u200D\u{10CE5}', // X ligatúra (EK + ZWJ + ESZ)
+  'y':  '\u{10CD0}\u200D\u{10CD2}', // Y ligatúra (I + ZWJ + EJ)
 
   // Magánhangzók
   'a': '\u{10CC0}', 'á': '\u{10CC1}',
-  'e': '\u{10CC8}', 'ë': '\u{10CC9}', 'é': '\u{10CCA}',
-  'i': '\u{10CCE}', 'í': '\u{10CCF}',
-  'o': '\u{10CD6}', 'ó': '\u{10CD7}',
-  'ö': '\u{10CD8}', 'ő': '\u{10CD9}',
-  'u': '\u{10CDE}', 'ú': '\u{10CDF}',
-  'ü': '\u{10CE0}', 'ű': '\u{10CE1}',
+  'e': '\u{10CC9}', 'ë': '\u{10CCA}', 'é': '\u{10CCB}',
+  'i': '\u{10CD0}', 'í': '\u{10CD1}',
+  'o': '\u{10CDB}', 'ó': '\u{10CDC}',
+  'ö': '\u{10CDE}', 'ő': '\u{10CDF}',
+  'u': '\u{10CEA}', 'ú': '\u{10CEB}',
+  'ü': '\u{10CED}', 'ű': '\u{10CEC}',
 
   // Mássalhangzók
   'b': '\u{10CC2}', 'c': '\u{10CC4}', 'd': '\u{10CC7}',
-  'f': '\u{10CCB}', 'g': '\u{10CCC}', 'h': '\u{10CD0}',
-  'j': '\u{10CD1}', 'k': '\u{10CD2}', // alapértelmezés: magas K
-  'l': '\u{10CD4}', 'm': '\u{10CDA}', 'n': '\u{10CDB}',
-  'p': '\u{10CDD}', 'r': '\u{10CE2}', 's': '\u{10CE4}',
-  't': '\u{10CE7}', 'v': '\u{10CEE}', 'z': '\u{10CEF}',
+  'f': '\u{10CCC}', 'g': '\u{10CCD}', 'h': '\u{10CCF}',
+  'j': '\u{10CD2}', 'k': '\u{10CD3}', // alapértelmezés: magas K (EK)
+  'l': '\u{10CD6}', 'm': '\u{10CD8}', 'n': '\u{10CD9}',
+  'p': '\u{10CE0}', 'r': '\u{10CE2}', 's': '\u{10CE4}',
+  't': '\u{10CE6}', 'v': '\u{10CEE}', 'z': '\u{10CEF}',
 
   // Írásjelek
   ',': '\u2E41',  // tükrözött vessző
 };
 
-// Bogárjelek tábla — v2.0-ban implementálandó
-// Lásd: 13. fejezet (Tervezett funkciók)
+// Bogárjelek: tables/bugsigns.js. Nincsenek ebben a táblában.
+// Lásd: 13. fejezet.
 
 // Számjegy tábla
 // Megjegyzés: a millió (1000000) a rekurzív algoritmus által automatikusan
@@ -614,8 +651,8 @@ const NUMBER_VALUES: [number, string][] = [
 const DEEP_VOWELS = new Set(['a', 'á', 'o', 'ó', 'u', 'ú']);
 const HIGH_VOWELS = new Set(['e', 'é', 'ë', 'i', 'í', 'ö', 'ő', 'ü', 'ű']);
 
-const DEEP_K = '\u{10CD3}'; // aK (mély/kapocs K)
-const HIGH_K = '\u{10CD2}'; // eK (magas/rombusz K)
+const DEEP_K = '\u{10CD4}'; // AK (mély/kapocs K)
+const HIGH_K = '\u{10CD3}'; // EK (magas/rombusz K)
 ```
 
 ---
@@ -674,9 +711,9 @@ const HIGH_K = '\u{10CD2}'; // eK (magas/rombusz K)
 | `"kor"` | mély K |
 | `"kín"` | magas K |
 
-#### 9.1.6 Bogárjelek — v2.0
+#### 9.1.6 Bogárjelek
 
-> Bogárjel-tesztek a v2.0 fejlesztési ciklusban kerülnek hozzáadásra. Lásd: 13. fejezet.
+A `tests/bugsigns.test.mjs` ellenőrzi a 13. fejezet eseteit: a `t` nem ENT, az `e` nem AND, a `ly` nem UNK, az `ű` nem EMP; alapból nincs helyettesítés; a hagyományos név és a mássalhangzó-kapcsolat külön eredményt ad; az `ember` csak cluster módban kap AMB-t; az ENT és az ENT-SHAPED SIGN különböző kódpont; az n+ZWJ+t nem ENT; az `omp`, a `tprus`, a `temperius` és az `us` csak a saját kapcsolójával él; a `plusz` `sz`-e megmarad. A számtesztek ettől függetlenül tovább futnak.
 
 ### 9.2 Egységtesztek — Rovás → Latin
 
@@ -715,8 +752,8 @@ rovas-konverter/
 │   │   ├── letters.ts        # LATIN_TO_ROVAS tábla
 │   │   ├── numbers.ts        # NUMBER_VALUES tábla
 │   │   ├── punctuation.ts    # Írásjelek tábla
-│   │   └── inverse.ts        # Inverz tábla (automatikusan generált)
-│   │   # v2.0: bugsigns.ts   # BUGSIGNS tábla (bogárjelek)
+│   │   ├── inverse.ts        # Inverz tábla
+│   │   └── bugsigns.ts       # Bogárjel-kódpontok és olvasatok
 │   ├── converters/
 │   │   ├── latin-to-rovas.ts # Latin → Rovás konverter
 │   │   ├── rovas-to-latin.ts # Rovás → Latin konverter
@@ -750,6 +787,9 @@ rovas-konverter/
 8. **oldhungarian.eu** — Unicode kompatibilis rovásírás betűtípus és ligatúra-dokumentáció
 9. **rovas.info** — Rovás kódolási segédlet / Guide to Rovas font encoding (https://rovas.info/2021/06/rovas-encoding/)
 10. **Mészáros Arnold** — runes-2_0_class.js (rovas.magyarrovas.hu) — referencia implementáció a konverziós algoritmushoz
+11. **Everson–Szelp N4268R** — https://www.unicode.org/L2/L2012/12168r-n4268r-oldhungarian.pdf (5–6. fejezet: homorgán nazálisok és ligatúrák)
+12. **Unicode 17 névjegyzék** — https://www.unicode.org/Public/17.0.0/charts/nameslist/n_10C80.html
+13. **Friedrich Klára: Csudabogarak?** — https://www.rovasirasforrai.hu/Rovasiras/Csudabogarak.htm
 
 ---
 
@@ -772,68 +812,59 @@ A kimenet helyes megjelenítéséhez az alábbi fontok valamelyike szükséges:
 
 ---
 
-## 13. Tervezett funkciók — v2.0 (Bogárjelek / Kísérőjelek)
+## 13. Bogárjelek
 
-> Ez a fejezet a v2.0 fejlesztési ciklus referencia-dokumentációja. A v1.x implementáció NEM tartalmazza ezeket a funkciókat. Az alábbi szabályrendszer és kódpont-hozzárendelések a Unicode szabvány N4268 ajánlása és a rovas.info kódolási segédlet alapján lettek összeállítva, de **az implementáció előtt a pontos Unicode kódpontokat validálni kell** a szabvány aktuális verziója alapján.
+A bogárjel külön kódolt karakter. Az összerovás betűk sorozata, amelyet a betűtípus ZWJ-vel vagy OpenType-pal vonhat össze. A kettő nem cserélhető fel.
 
-### 13.1 Bogárjelek karaktertáblája
+Források:
 
-| Latin kombináció | Rovás név | Unicode kódpont (kis) | Unicode kódpont (nagy) | Megjegyzés |
-|-----------------|-----------|----------------------|----------------------|------------|
-| amb | AMB | U+10CC3 | U+10C83 | |
-| and | AND | U+10CE9 | U+10CA9 | |
-| ant | ANT | U+10CEA | U+10CAA | |
-| emp | EMP | U+10CEB | U+10CAB | |
-| ent / int | ENT | U+10CEC | U+10CAC | Azonos jel |
-| unk / ünk | UNK | U+10CED | U+10CAD | Azonos jel |
-| us | US | U+10CE3 | U+10CA3 | |
-| enc | ENC | U+10CC5 | U+10C85 | |
-| nb | NB | U+10CE5 | U+10CA5 | |
-| mb | MB | U+10CF2 | U+10CB2 | |
-| ak | AK | U+10CD3 | U+10C93 | Azonos a mély K kódpontjával |
+1. Everson–Szelp, N4268R, 5. fejezet: a hat homorgán nazális (AMB, ENC, AND, UNK, EMP, ENT) zárhangot vagy zár-réshangot és az azt megelőző, azonos képzéshelyű nazálist jelöl. Nem produktív ligatúra. Az NB, MB, AK, ANT önálló „bogárjel-kódpontjai” nincsenek: az AK a mély K (U+10CD4), az ESZ az U+10CE5, az US az U+10CF2.
+2. Ugyanott, 6. fejezet: az nc, nd, nk (n+ek, nem n+ak) és nt ligatúra más betűkapcsolat. Szabályos mb és mp ligatúra nem ismert. A ligatúra választható, U+200D vagy OpenType kéri. Az n+ZWJ+t ezért nem az ENT.
+3. Unicode 17 névjegyzék: az ENT „also used for ant and int”. Az ENT-SHAPED SIGN (U+10CF1) más karakter; a régi szakirodalom tprusnak nevezte, később a *temperius* rövidítéseként azonosították. A kódolt név nem TPRUS és nem TPRU.
+4. N4268R 1.1: Telegdi a középkori tp̃rꝯ rövidítést tévesen „tpru”-ként olvasta a *temperius* helyett. A `tpru` ezért nem helyettesítési kulcs.
+5. Friedrich Klára, „Csudabogarak?”: az EMP/OMP, az US és a TPRUS olvasata vitatott. A cikk feltevése, hogy névjelek és mesterjegyek kerültek az ábécékbe; ezt a szerző további kutatásra szoruló feltételezésnek mondja. A konverter nem ezt az álláspontot alkalmazza csendben, és az N4268R elemzését sem kezeli Friedrich cáfolataként.
 
-**Időjelek** (validáció szükséges):
+### 13.1 Alapértelmezés
 
-| Latin kombináció | Rovás név | Kódpont (feltételezett) |
-|-----------------|-----------|------------------------|
-| tprus | TPRUS (ÉV) | U+10CF1 |
-| tpru | TPRU (HÓNAP) | U+10CF3 |
+- Latin → rovás: nincs bogárjel-helyettesítés. Az `antal` betűnként készül, a `t` az ET (U+10CE6).
+- Rovás → latin, ha a hat nazális jel már a szövegben van: `mb`, `nc`, `nd`, `nk`, `mp`, `nt`. A név eleji magánhangzó nincs hozzáírva, mert az N4268R a jelet nazális+zárhangként határozza meg, az ENT pedig ant és int is lehet.
+- ENT-SHAPED SIGN és US: a karakter megmarad.
 
-### 13.2 Bogárjelek feldolgozási szabálya
+### 13.2 Kapcsolók
 
-Ha a `useBugsigns` konfiguráció aktív, a bogárjelek keresése a normál betűkonverzió ELŐTT történik. A feldolgozási prioritás:
+| Kapcsoló | Alapértelmezés | Hatás |
+|----------|----------------|-------|
+| `homorganicMode: 'traditional'` | ki | `amb`, `enc`, `and`, `unk`, `emp`, `ent`, `ant`, `int` → a megfelelő jel. A magánhangzó a jelbe olvad. |
+| `homorganicMode: 'cluster'` | ki | `mb`, `nc`, `nd`, `nk`, `mp`, `nt` → a jel. A magánhangzó külön betű. Az `ember` és a `domb` is jelet kap. |
+| `entVowel` | `e` | traditional visszafejtés: `ent`, `ant` vagy `int`. Előre mindhárom ENT-et ad. |
+| `empReading: 'omp'` | `emp` | csak traditional módban. Friedrich vitatott olvasata; az `emp` és az `omp` nem él egyszerre. |
+| `entShapedReading` | `preserve` | `tprus` vagy `temperius` ↔ ENT-SHAPED SIGN. Nem az ENT. |
+| `useUsSign` | `false` | `us` ↔ US. A `sz` kettős betűt nem bontja (`plusz` változatlan). Kikapcsolva a jel megmarad. |
 
-**5 karakteres:** `tprus`
-**4 karakteres:** `tpru`
-**3 karakteres:** `and`, `ant`, `amb`, `emp`, `ent`, `int`, `unk`, `ünk`, `enc`
-**2 karakteres:** `ak`, `mb`, `nb`, `us`
+A helyettesítés nem lép át szóközt, írásjelet vagy `|` elválasztót. A `ünk` nincs az UNK-ra kötve. A 3 betűnél hosszabb kulcs a közönséges betűk előtt áll; a 2–3 betűs bogárjel a `cs` / `sz` / `dzs` után, és nem nyelheti le egy kettős betű első felét (`ponty`, `ncs`, `usz`).
 
-Ezek a kulcsok a normál kettős/hármas betűk (cs, gy, dzs stb.) ELŐTT keresendők.
+### 13.3 Példák
 
-### 13.3 Bogárjelek konfigurációs bővítés
+| Bemenet | Mód | Kimenet |
+|---------|-----|---------|
+| `antal` | off | A + N + ET + A + L |
+| `antal` | traditional | ENT + A + L; visszafelé `ental`, ha `entVowel` = `e` |
+| `antal` | traditional, `entVowel: 'a'` | ENT + A + L; visszafelé `antal` |
+| `antal` | cluster | A + ENT + A + L; visszafelé `antal` |
+| `ember` | traditional | betűnként, nincs bogárjel |
+| `ember` | cluster | E + AMB + E + R |
+| `bambusz` | traditional | B + AMB + U + SZ |
+| `bambusz` | cluster | B + A + AMB + U + SZ |
+| `munkás` | traditional | M + UNK + Á + S |
+| `szent` | traditional | SZ + ENT |
+| `nt` | traditional | N + ET, nem ENT |
+| `tprus` | preserve | betűnként |
+| `tprus` | `entShapedReading: 'tprus'` | ENT-SHAPED SIGN, nem ENT |
+| n+ZWJ+t | bármely | `n` + ZWJ + `t`, nem ENT |
 
-```typescript
-// v2.0 config bővítés
-interface RovasConverterConfig {
-  // ... v1.x opciók ...
-  useBugsigns: boolean; // default: false — Kísérőjelek (bogárjelek) használata
-}
-```
+### 13.4 Nyitott kérdések
 
-### 13.4 Bogárjel tesztek
-
-| Bemenet | Elvárt kimenet (leírás) |
-|---------|------------------------|
-| `"antal"` | ANT + A + eL |
-| `"ember"` | E + eM + eB + E + eR (nincs bogárjel illeszkedés) |
-| `"bambusz"` | eB + AMB + U + eSZ |
-| `"munkás"` | eM + UNK + Á + eS |
-
-### 13.5 Validációs feladat a v2.0 fejlesztés előtt
-
-A DEV és AUD a következő forrásokat kell egyeztesse az implementáció előtt:
-1. Unicode szabvány N4268 ajánlás — pontos kódpont-hozzárendelések
-2. rovas.info kódolási segédlet (https://rovas.info/2021/06/rovas-encoding/)
-3. oldhungarian.eu ligatúra-dokumentáció
-
-Ha egy bogárjel kódpontja eltér a fenti táblázattól, az AUD jelzi és a SPEC frissítendő.
+- A bolognai emlék emp-alakváltozatát az N4268R mind /mb/, mind /mp/ értékkel azonosítja, és az AMB-t Telegdi külön jelének mondja. A konverter az AMB-t és az EMP-t nem olvasztja össze.
+- Az ö és az ü két történeti betűje (Nikolsburg és Rudimenta) egyenrangú. Az alap a Rudimenta OE / UE és a Forrai-féle ű a NIKOLSBURG UE-n, mert külön UEE kódpont nincs. Mindkét OE visszafelé `ö`.
+- Az ECH olvasata a szakirodalomban ty vagy /x/. Nincs automatikus átírás.
+- A történeti összerovások listája nem teljes, és a kép a betűtípustól függ. A konverter nem szúr be ZWJ-t ehhez a listához.

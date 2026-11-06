@@ -12,9 +12,9 @@ export { numberToRovas, rovasToNumber, arabicStringToRovas } from './converters/
 // Segédfüggvények
 // Spec: 7.2
 export { getVowelHarmony, selectK } from './converters/vowel-harmony.js';
-export { DEFAULT_CONFIG, DEEP_VOWELS, HIGH_VOWELS, DEEP_K, HIGH_K } from './config.js';
+export { DEFAULT_CONFIG, DEEP_VOWELS, HIGH_VOWELS, DEEP_K, HIGH_K, DEEP_K_UPPER, HIGH_K_UPPER } from './config.js';
 // Táblázatok (opcionális export, haladó használatra)
 export { LATIN_TO_ROVAS } from './tables/letters.js';
 export { NUMBER_VALUES, ROVAS_TO_NUMBER } from './tables/numbers.js';
 export { ROVAS_TO_LATIN, ROVAS_LIGATURES_TO_LATIN } from './tables/inverse.js';
-//# sourceMappingURL=index.js.map
+export { BUG_SIGNS } from './tables/bugsigns.js';

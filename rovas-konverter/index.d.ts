@@ -10,8 +10,9 @@ export { numberToRovas, rovasToNumber, arabicStringToRovas } from './converters/
 export type { RovasNumberOptions, ThousandsMode } from './converters/numbers.js';
 export { getVowelHarmony, selectK } from './converters/vowel-harmony.js';
 export type { RovasConverterConfig } from './config.js';
-export { DEFAULT_CONFIG, DEEP_VOWELS, HIGH_VOWELS, DEEP_K, HIGH_K } from './config.js';
+export { DEFAULT_CONFIG, DEEP_VOWELS, HIGH_VOWELS, DEEP_K, HIGH_K, DEEP_K_UPPER, HIGH_K_UPPER } from './config.js';
 export { LATIN_TO_ROVAS } from './tables/letters.js';
 export { NUMBER_VALUES, ROVAS_TO_NUMBER } from './tables/numbers.js';
 export { ROVAS_TO_LATIN, ROVAS_LIGATURES_TO_LATIN } from './tables/inverse.js';
+export { BUG_SIGNS } from './tables/bugsigns.js';
 //# sourceMappingURL=index.d.ts.map
