@@ -193,6 +193,110 @@
       max-width: 70rem;
     }
 
+    .option {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .tip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex: 0 0 auto;
+    }
+
+    .tip-btn {
+      width: 1.15rem;
+      height: 1.15rem;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      font-family: inherit;
+      line-height: 1;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .tip-btn:hover,
+    .tip-btn:focus-visible {
+      color: var(--text);
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .tip-pop {
+      position: absolute;
+      z-index: 30;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: min(18rem, 72vw);
+      padding: 0.45rem 0.6rem;
+      background: #12121a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1.45;
+      text-align: left;
+      text-transform: none;
+      letter-spacing: normal;
+      white-space: normal;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .tip:hover .tip-pop,
+    .tip:focus-within .tip-pop,
+    .tip.is-open .tip-pop {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sign-notes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding: 0.55rem 0.9rem 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .sign-notes[hidden] { display: none; }
+
+    .sign-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      max-width: 100%;
+      padding: 0.15rem 0.4rem 0.15rem 0.45rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .sign-glyph {
+      font-family: 'Noto Sans Old Hungarian', serif;
+      color: var(--text);
+      font-size: 1.05rem;
+      line-height: 1;
+    }
+
+    .sign-chip .tip-pop {
+      top: auto;
+      bottom: calc(100% + 6px);
+    }
+
     /* Direction switch */
     .direction-switch {
       display: flex;
@@ -402,6 +506,9 @@
       }
       .arrow-col {
         padding: 0;
+        flex-direction: row;
+      }
+      .swap-btn {
         transform: rotate(90deg);
       }
       main { padding: 1rem; }
@@ -424,29 +531,53 @@
     <span class="config-label">Beállítások</span>
 
     <div class="toggle-group">
-      <label class="toggle">
-        <input type="checkbox" id="toggleVowelHarmony">
-        <span class="toggle-track"></span>
-        <span class="toggle-label">Hangrendiség (K)</span>
-      </label>
+      <div class="option">
+        <label class="toggle">
+          <input type="checkbox" id="toggleVowelHarmony">
+          <span class="toggle-track"></span>
+          <span class="toggle-label">Hangrendiség (K)</span>
+        </label>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-k" aria-label="Magyarázat: hangrendiség">ⓘ</button>
+          <span class="tip-pop" id="tip-k" role="tooltip">Bekapcsolva a szó hangrendje választ: mély szónál AK, magasnál EK. Kikapcsolva minden k a magas EK.</span>
+        </span>
+      </div>
 
-      <label class="toggle">
-        <input type="checkbox" id="toggleCapitals">
-        <span class="toggle-track"></span>
-        <span class="toggle-label">Nagybetűk</span>
-      </label>
+      <div class="option">
+        <label class="toggle">
+          <input type="checkbox" id="toggleCapitals">
+          <span class="toggle-track"></span>
+          <span class="toggle-label">Nagybetűk</span>
+        </label>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-capitals" aria-label="Magyarázat: nagybetűk">ⓘ</button>
+          <span class="tip-pop" id="tip-capitals" role="tooltip">Bekapcsolva a latin nagybetű nagy rovásjelet kap. Kikapcsolva minden jel kisbetű. A nagybetű a rovásban újabb szokás.</span>
+        </span>
+      </div>
 
-      <label class="toggle" title="Bekapcsolva: MM = 1000 × 1000. Kikapcsolva: a vezető MM = 1000 + 1000.">
-        <input type="checkbox" id="toggleThousandsMode" checked>
-        <span class="toggle-track"></span>
-        <span class="toggle-label">Ezresjelek szorzása (MM = 1 millió)</span>
-      </label>
+      <div class="option">
+        <label class="toggle">
+          <input type="checkbox" id="toggleThousandsMode" checked>
+          <span class="toggle-track"></span>
+          <span class="toggle-label">Ezresjelek szorzása (MM = 1 millió)</span>
+        </label>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-thousands" aria-label="Magyarázat: ezresjelek">ⓘ</button>
+          <span class="tip-pop" id="tip-thousands" role="tooltip">Bekapcsolva a vezető 𐳿𐳿 egymillió (1000×1000). Kikapcsolva ugyanaz 2000, az egymillió pedig 𐳺𐳿𐳿. A két olvasat belső szabály; külön milliós jel nincs a Unicode-ban.</span>
+        </span>
+      </div>
     </div>
 
     <div class="divider"></div>
 
     <div class="toggle-group">
-      <span class="toggle-label" style="color:var(--text-muted); font-size:0.82rem;">Idegen betűk:</span>
+      <span class="option">
+        <span class="toggle-label" style="color:var(--text-muted); font-size:0.82rem;">Idegen betűk:</span>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-foreign" aria-label="Magyarázat: idegen betűk">ⓘ</button>
+          <span class="tip-pop" id="tip-foreign" role="tooltip">Ligatúra: a q, w, x, y, dz és dzs ZWJ-s jelsor. Feloldás: q és qu KV, w VV, x KSZ, y I. Ez összerovás, nem bogárjel.</span>
+        </span>
+      </span>
       <div class="direction-switch">
         <button class="direction-btn active" id="modeLigature" onclick="setMode('ligature')">Ligatúra</button>
         <button class="direction-btn" id="modeDecompose" onclick="setMode('decompose')">Feloldás</button>
@@ -454,48 +585,70 @@
     </div>
 
     <div class="bug-row">
-      <label class="field" title="A hat homorgán nazális (AMB, ENC, AND, UNK, EMP, ENT) külön Unicode-betű, nem ZWJ-s összerovás. Kikapcsolva a latin szöveg betűnként megy át; a már beírt jel mássalhangzó-kapcsolatként (mb, nt) olvasódik, magánhangzó hozzátoldása nélkül.">
-        <span class="toggle-label">Homorgán nazális</span>
+      <div class="field">
+        <label class="toggle-label" for="homorganicMode">Homorgán nazális</label>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-homorganic" aria-label="Magyarázat: homorgán nazális">ⓘ</button>
+          <span class="tip-pop" id="tip-homorganic" role="tooltip">Az AMB, ENC, AND, UNK, EMP és ENT külön betű, nem összerovás. Ki: a latin szöveg betűnként megy; a már beírt jel mb, nt alakban olvasódik, magánhangzó nélkül. Hagyományos név: amb, ent, ant, int, a magánhangzó a jelbe olvad. Mássalhangzó-kapcsolat: mb, nt; az ember és a domb is jelet kap.</span>
+        </span>
         <select id="homorganicMode">
           <option value="off" selected>Ki</option>
           <option value="traditional">Hagyományos név (amb, ent, ant, int)</option>
           <option value="cluster">Mássalhangzó-kapcsolat (mb, nt)</option>
         </select>
-      </label>
+      </div>
 
-      <label class="field" title="Csak a hagyományos név visszafejtésében számít. Az ENT ugyanaz a jel ent, ant és int értékkel is; a latin visszaírás egy magánhangzót választ.">
-        <span class="toggle-label">ENT magánhangzója</span>
+      <div class="field">
+        <label class="toggle-label" for="entVowel">ENT magánhangzója</label>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-ent-vowel" aria-label="Magyarázat: ENT magánhangzója">ⓘ</button>
+          <span class="tip-pop" id="tip-ent-vowel" role="tooltip">Csak a hagyományos név visszaírásánál él, ezért a lista addig szürke. Az ENT ent, ant és int is lehet; előre mindhárom ugyanaz a jel, visszafelé egy magánhangzó írható ki.</span>
+        </span>
         <select id="entVowel" disabled>
           <option value="e" selected>e (ent)</option>
           <option value="a">a (ant)</option>
           <option value="i">i (int)</option>
         </select>
-      </label>
+      </div>
 
-      <label class="field" title="A Unicode neve EMP. Az omp Friedrich Klára vitatott olvasata a nikolsburgi feliratról; csak a hagyományos név módban kapcsol be.">
-        <span class="toggle-label">EMP olvasat</span>
+      <div class="field">
+        <label class="toggle-label" for="empReading">EMP olvasat</label>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-emp" aria-label="Magyarázat: EMP olvasat">ⓘ</button>
+          <span class="tip-pop" id="tip-emp" role="tooltip">A Unicode neve emp. Az omp Friedrich Klára vitatott olvasata, csak kérésre és csak a hagyományos név módban. A kettő egyszerre nem él.</span>
+        </span>
         <select id="empReading" disabled>
           <option value="emp" selected>emp</option>
           <option value="omp">omp (vitatott)</option>
         </select>
-      </label>
+      </div>
 
-      <label class="field" title="Az ENT-alakú jel (U+10CF1) nem az ENT. A régi szakirodalom tprusnak nevezte; a Unicode és az N4268R szerint ez a temperius rövidítése. A hangérték bizonytalan, ezért alapból megőrizzük a karaktert.">
-        <span class="toggle-label">ENT-alakú jel</span>
+      <div class="field">
+        <label class="toggle-label" for="entShapedReading">ENT-alakú jel</label>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-ent-shaped" aria-label="Magyarázat: ENT-alakú jel">ⓘ</button>
+          <span class="tip-pop" id="tip-ent-shaped" role="tooltip">Más karakter, mint az ENT. A hangértéke bizonytalan, ezért alapból megőrizzük. A tprus régi szakirodalmi név. A temperius az N4268R és a Unicode szerinti rövidítésfeloldás. Mindkettő csak kérésre.</span>
+        </span>
         <select id="entShapedReading">
           <option value="preserve" selected>Megőrzés</option>
           <option value="tprus">tprus (régi név)</option>
           <option value="temperius">temperius</option>
         </select>
-      </label>
+      </div>
 
-      <label class="toggle" title="Az US (U+10CF2) olvasata vitatott. Bekapcsolva az us betűpár a jelre cserélődik, kivéve ha a s a sz kettős betű része. Kikapcsolva a rovásjel változatlan marad.">
-        <input type="checkbox" id="toggleUsSign">
-        <span class="toggle-track"></span>
-        <span class="toggle-label">US jel</span>
-      </label>
+      <div class="option">
+        <label class="toggle">
+          <input type="checkbox" id="toggleUsSign">
+          <span class="toggle-track"></span>
+          <span class="toggle-label">US jel</span>
+        </label>
+        <span class="tip">
+          <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-us" aria-label="Magyarázat: US jel">ⓘ</button>
+          <span class="tip-pop" id="tip-us" role="tooltip">Az olvasata vitatott. Kikapcsolva a jel megmarad. Bekapcsolva az us pár US lesz, de a sz kettős betű nem bomlik: a plusz változatlan.</span>
+        </span>
+      </div>
 
-      <p class="bug-hint">A bogárjel külön kódolt betű, nem összerovás. Alapból nem helyettesítünk, és a vitatott olvasatot nem alkalmazzuk magától. A mássalhangzó-kapcsolat az „ember” és a „domb” mb-jét is bogárjelre cseréli; a hagyományos név a magánhangzót a jelbe olvassa, ezért az „antal” visszafelé „ental”, hacsak az ENT magánhangzója nem „a”.</p>
+      <p class="bug-hint">A bogárjel külön kódolt betű, nem összerovás. Alapból nem helyettesítünk. A részletek az ⓘ gombokon vannak: egérrel, Tabbal vagy érintéssel nyílnak.</p>
     </div>
   </div>
 
@@ -517,7 +670,11 @@
 
     <!-- Swap arrow -->
     <div class="arrow-col">
-      <button class="swap-btn" onclick="swapDirection()" title="Irányváltás">⇄</button>
+      <span class="tip">
+        <button class="swap-btn" onclick="swapDirection()" aria-describedby="tip-swap" aria-label="Irányváltás">⇄</button>
+        <button type="button" class="tip-btn" aria-expanded="false" aria-describedby="tip-swap" aria-label="Magyarázat: irányváltás">ⓘ</button>
+        <span class="tip-pop" id="tip-swap" role="tooltip">A kimenet a bemenetbe kerül, és az irány megfordul. Az ezresjel és a bogárjel a most kiválasztott olvasat szerint marad.</span>
+      </span>
     </div>
 
     <!-- Output -->
@@ -527,6 +684,7 @@
         <span class="char-count" id="outputCount">0 jel</span>
       </div>
       <div class="rovas-output empty" id="outputText">A kimenet itt jelenik meg</div>
+      <div class="sign-notes" id="signNotes" hidden></div>
       <div class="action-bar">
         <button class="btn" onclick="copyOutput()">⎘ Másolás</button>
         <button class="btn btn-primary" onclick="copyCodepoints()">U+ Kódpontok</button>
@@ -578,6 +736,7 @@
       output.textContent = 'A kimenet itt jelenik meg';
       output.classList.add('empty');
       count.textContent = '0 jel';
+      renderSignNotes('');
       return;
     }
 
@@ -599,11 +758,139 @@
 
       const chars = [...result];
       count.textContent = chars.length + ' jel';
+      renderSignNotes(result);
     } catch (e) {
       output.textContent = 'Hiba: ' + e.message;
       output.classList.add('empty');
+      renderSignNotes('');
     }
   }
+
+  const SIGN_INFO = [
+    {
+      name: 'AMB',
+      codes: ['\u{10CC3}', '\u{10C83}'],
+      reading: () => config.homorganicMode === 'traditional' ? 'amb' : 'mb',
+      tip: 'Nazális és b. Alapból mb, magánhangzó nélkül. A hagyományos név (amb) csak kérésre olvassa a magánhangzót a jelbe.',
+    },
+    {
+      name: 'ENC',
+      codes: ['\u{10CC5}', '\u{10C85}'],
+      reading: () => config.homorganicMode === 'traditional' ? 'enc' : 'nc',
+      tip: 'Nazális és c. Alapból nc. A hagyományos név (enc) csak kérésre toldja hozzá a magánhangzót.',
+    },
+    {
+      name: 'AND',
+      codes: ['\u{10CC8}', '\u{10C88}'],
+      reading: () => config.homorganicMode === 'traditional' ? 'and' : 'nd',
+      tip: 'Nazális és d. Alapból nd. A hagyományos név (and) csak kérésre toldja hozzá a magánhangzót.',
+    },
+    {
+      name: 'UNK',
+      codes: ['\u{10CD5}', '\u{10C95}'],
+      reading: () => config.homorganicMode === 'traditional' ? 'unk' : 'nk',
+      tip: 'Nazális és k. Alapból nk. Az N4268R a kettőzött AK-ból eredezteti, nem az n+ek összerovásból. A hagyományos név (unk) csak kérésre él.',
+    },
+    {
+      name: 'EMP',
+      codes: ['\u{10CE1}', '\u{10CA1}'],
+      reading: () => config.homorganicMode === 'traditional'
+        ? (config.empReading === 'omp' ? 'omp' : 'emp')
+        : 'mp',
+      tip: 'Nazális és p. Alapból mp. A Unicode neve emp. Az omp Friedrich Klára vitatott olvasata, csak kérésre.',
+    },
+    {
+      name: 'ENT',
+      codes: ['\u{10CE7}', '\u{10CA7}'],
+      reading: () => config.homorganicMode === 'traditional' ? config.entVowel + 'nt' : 'nt',
+      tip: 'Nazális és t. Alapból nt. A Unicode szerint ent, ant és int is lehet; a visszaírás egy magánhangzót választ, és ez csak a hagyományos név módban kapcsol be. Nem az ENT-alakú jel.',
+    },
+    {
+      name: 'ENT-alakú',
+      codes: ['\u{10CF1}', '\u{10CB1}'],
+      reading: () => config.entShapedReading === 'preserve' ? 'megőrizve' : config.entShapedReading,
+      tip: 'Nem az ENT. A hangérték bizonytalan, ezért a jel megmarad, amíg külön nem kéred. A tprus régi név. A temperius az N4268R és a Unicode szerinti rövidítésfeloldás. Mindkettő értelmezés, nem biztos hangérték.',
+    },
+    {
+      name: 'US',
+      codes: ['\u{10CF2}', '\u{10CB2}'],
+      reading: () => config.useUsSign ? 'us' : 'megőrizve',
+      tip: 'A Unicode neve US, az olvasat vitatott. Alapból a jel megmarad. Az us helyettesítés csak kérésre él, és a sz kettős betűt nem bontja.',
+    },
+  ];
+
+  function renderSignNotes(text) {
+    const box = document.getElementById('signNotes');
+    const found = [];
+    const seen = new Set();
+    for (const char of text) {
+      const info = SIGN_INFO.find(item => item.codes.includes(char));
+      if (!info || seen.has(info.name)) continue;
+      seen.add(info.name);
+      found.push({ info, glyph: char });
+    }
+    box.replaceChildren();
+    if (!found.length) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+    for (const { info, glyph } of found) {
+      const chip = document.createElement('span');
+      chip.className = 'sign-chip';
+      const glyphEl = document.createElement('span');
+      glyphEl.className = 'sign-glyph';
+      glyphEl.textContent = glyph;
+      const label = document.createElement('span');
+      label.textContent = info.name + ' · ' + info.reading();
+      const tip = document.createElement('span');
+      tip.className = 'tip';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tip-btn';
+      btn.textContent = 'ⓘ';
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', 'Magyarázat: ' + info.name);
+      const popId = 'tip-sign-' + info.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      btn.setAttribute('aria-describedby', popId);
+      const pop = document.createElement('span');
+      pop.className = 'tip-pop';
+      pop.id = popId;
+      pop.setAttribute('role', 'tooltip');
+      pop.textContent = info.tip;
+      tip.append(btn, pop);
+      chip.append(glyphEl, label, tip);
+      box.append(chip);
+    }
+  }
+
+  function closeTips(except) {
+    document.querySelectorAll('.tip.is-open').forEach(tip => {
+      if (tip === except) return;
+      tip.classList.remove('is-open');
+      const btn = tip.querySelector('.tip-btn');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  document.addEventListener('click', event => {
+    const btn = event.target.closest('.tip-btn');
+    if (btn) {
+      const tip = btn.closest('.tip');
+      const willOpen = !tip.classList.contains('is-open');
+      closeTips();
+      if (willOpen) {
+        tip.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+      return;
+    }
+    if (!event.target.closest('.tip-pop')) closeTips();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeTips();
+  });
 
   // Input esemény
   document.getElementById('inputText').addEventListener('input', () => {

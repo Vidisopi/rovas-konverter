@@ -2,7 +2,7 @@
 
 > **Verzió**: 1.4
 > **Dátum**: 2026-11-06
-> **Szerző**: eredeti SPEC Claude (Anthropic) — Attila megbízásából; v1.3 számírási bővítés a kutatási patch alapján; v1.4 bogárjelek és Unicode-kódpontok
+> **Szerző**: Attila megbízásából. A projektet Grok Bot AI-asszisztensek segítségével fejlesztjük. v1.3 számírási bővítés a kutatási patch alapján; v1.4 bogárjelek és Unicode-kódpontok
 > **Referencia**: Rovás Alapítvány korszerű egységes jelkészlete, rovas.info betűalkalmazási szabályai, Unicode Old Hungarian (U+10C80–U+10CFF)
 > **Célplatform**: TypeScript/JavaScript library (webes és CLI használatra)
 > **Metodológia**: SDD (Spec-Driven Development)

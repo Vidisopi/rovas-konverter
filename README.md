@@ -414,3 +414,5 @@ A tesztek ellenőrzik a számírást (`thousandsMode`, `RangeError`, körbejár�
 ## Licenc
 
 [MIT](./LICENSE) © 2026 Vidisopi
+
+A projektet Grok Bot AI-asszisztensek segítségével fejlesztjük.
