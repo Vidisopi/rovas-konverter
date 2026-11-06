@@ -8,6 +8,7 @@ export const DEFAULT_CONFIG = {
     useCapitals: false, // Alapértelmezés: kisbetűs rovás
     direction: 'rtl', // Alapértelmezés: jobbról balra
     foreignLetterMode: 'ligature', // Alapértelmezés: ligatúrák használata
+    thousandsMode: 'multiplicative', // Alapértelmezés: MM = 1000 × 1000
 };
 /**
  * Mély hangrendű magánhangzók - Spec: 4.4.1

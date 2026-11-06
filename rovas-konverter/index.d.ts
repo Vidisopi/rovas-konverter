@@ -7,6 +7,7 @@
 export { latinToRovas } from './converters/latin-to-rovas.js';
 export { rovasToLatin } from './converters/rovas-to-latin.js';
 export { numberToRovas, rovasToNumber, arabicStringToRovas } from './converters/numbers.js';
+export type { RovasNumberOptions, ThousandsMode } from './converters/numbers.js';
 export { getVowelHarmony, selectK } from './converters/vowel-harmony.js';
 export type { RovasConverterConfig } from './config.js';
 export { DEFAULT_CONFIG, DEEP_VOWELS, HIGH_VOWELS, DEEP_K, HIGH_K } from './config.js';

@@ -1,14 +1,15 @@
 # Rovás Konverter — Spec-Driven Development Specifikáció
 
-> **Verzió**: 1.2  
-> **Dátum**: 2026-04-03  
-> **Szerző**: Claude (Anthropic) — Attila megbízásából  
-> **Referencia**: Rovás Alapítvány korszerű egységes jelkészlete, rovas.info betűalkalmazási szabályai, Unicode Old Hungarian (U+10C80–U+10CFF)  
-> **Célplatform**: TypeScript/JavaScript library (webes és CLI használatra)  
+> **Verzió**: 1.3
+> **Dátum**: 2026-11-06
+> **Szerző**: eredeti SPEC Claude (Anthropic) — Attila megbízásából; v1.3 számírási bővítés a kutatási patch alapján
+> **Referencia**: Rovás Alapítvány korszerű egységes jelkészlete, rovas.info betűalkalmazási szabályai, Unicode Old Hungarian (U+10C80–U+10CFF)
+> **Célplatform**: TypeScript/JavaScript library (webes és CLI használatra)
 > **Metodológia**: SDD (Spec-Driven Development)
 >
-> **Változásnapló v1.1**: Y ligatúra kódpont javítva (3.3); bogárjelek kiemelve a scope-ból → v2.0 tervezett funkció; számkonverzió millió-bejegyzés törölve (rekurzió kezeli)  
+> **Változásnapló v1.1**: Y ligatúra kódpont javítva (3.3); bogárjelek kiemelve a scope-ból → v2.0 tervezett funkció; számkonverzió millió-bejegyzés törölve (rekurzió kezeli)
 > **Változásnapló v1.2**: Vegyes hangrendű K-választás pontosítva konkrét algoritmussal és példákkal (4.4.3); bugsigns.ts kiemelve a fájlstruktúrából (10. fejezet)
+> **Változásnapló v1.3**: millió feletti számok visszafejtése; `thousandsMode` (multiplicative/additive); RangeError a biztonságos egész tartományon kívül; README magyarra
 
 ---
 
@@ -309,7 +310,7 @@ A rovás számrendszer additív (nem pozicionális), a következő jelekkel:
 #### 4.6.1 Algoritmus (szám → rovás)
 
 ```
-BEMENET: egész szám (max. 9 jegyű, azaz max 999 999 999)
+BEMENET: egész szám (0–Number.MAX_SAFE_INTEGER; ennél nagyobb bemenet RangeError)
 KIMENET: rovás számjegy-sorozat
 
 A helyiértékek csökkenő sorrendben:
@@ -324,6 +325,13 @@ Minden helyiértékre:
 Megjegyzés: a rekurzió automatikusan kezeli a nagy számokat.
 Pl. 2000000 → szorzó=2000 az 1000-es helyiértékre → rekurzív hívás(2000)
     → szorzó=2 az 1000-esre → II + M → tehát: II + M + M
+Pl. 1000000000 → M + M + M = 1000 × 1000 × 1000 (Vér Csaba /
+    Friedrich Klára modern konvenciója; nem régészeti lelet)
+thousandsMode = 'multiplicative' (alapértelmezés): MM = 1 000 000.
+thousandsMode = 'additive': a vezető MM = 2000. Az író e módban
+    a beágyazott ezresszorzat elé explicit I jelet tesz: IMM =
+    1 000 000, IMMM = 1 000 000 000. Így mindkét mód saját kimenete
+    ugyanabban a módban pontosan visszafejthető.
 
 PÉLDA: 42 → 4×10 + 2×1 → IIII×X + II → (4)(10)(2) rovás jelekre bontva
 PÉLDA: 1253 → 1×1000 + 2×100 + 1×50 + 3×1 → M + II×C + L + III
@@ -434,7 +442,18 @@ KIMENET: arab szám (string)
 2. A jeleket értéküknek megfelelően összegezzük
 3. Ha egy kisebb jel nagyobb jel ELŐTT áll → szorzóként értelmezzük
    (pl. II + C = 2×100 = 200)
-4. A végső összeg az arab szám
+4. Alapértelmezett multiplikatív módban az egymás melletti ezres jelek
+   beágyazott szorzóláncot alkotnak: MM = 1000×1000; MMM = 1000×1000×1000.
+   Kisebb szorzójelek ezt a láncot egészítik ki: II + M + M = 2000×1000.
+5. { thousandsMode: 'additive' } esetén a teljes számsort alkotó,
+   kizárólag ezresjelekből álló vezető futam összeadandó: MM = 2000,
+   MMM = 3000. Ha kisebb maradék követi, a blokk szorzó marad:
+   MMI = 1 000 001, mert az I a maradékhoz tartozik.
+   Az I vezetésű IMM nem vezető ezresfutam, ezért 1×1000×1000 marad.
+   A többi szorzóblokk szabálya változatlan: IIM = 2000, IIX = 20.
+   Ez az additív mód nem univerzális történeti parser: a nem beágyazott
+   ezresfutamokon túl a kanonikus szorzóírást olvassa.
+6. A végső összeg az arab szám; Number.MAX_SAFE_INTEGER felett RangeError
 
 PÉLDA: M II×C L III → 1000 + 200 + 50 + 3 = 1253
 ```
@@ -463,6 +482,11 @@ interface RovasConverterConfig {
   // Írásirány
   direction: 'rtl' | 'ltr'; // default: 'rtl'
 
+  // Ezresjelek olvasása és a nagy számok írása
+  thousandsMode: 'multiplicative' | 'additive'; // default: 'multiplicative'
+  // multiplicative: MM = 1 000 000
+  // additive: vezető MM = 2000; az írás 1 000 000-re IMM alakot ad
+
   // QWXY kezelési mód
   foreignLetterMode: 'ligature' | 'decompose';
   // 'ligature': önálló DZ, DZS, Q, W, X, Y ligatúra-jeleket használ
@@ -485,13 +509,13 @@ interface RovasConverterConfig {
 function latinToRovas(text: string, config?: Partial<RovasConverterConfig>): string;
 
 // Rovás → Latin konverzió
-function rovasToLatin(text: string): string;
+function rovasToLatin(text: string, config?: RovasNumberOptions): string;
 
 // Szám → Rovás szám
-function numberToRovas(num: number): string;
+function numberToRovas(num: number, options?: RovasNumberOptions): string;
 
 // Rovás szám → arab szám
-function rovasToNumber(rovasNum: string): number;
+function rovasToNumber(rovasNum: string, options?: RovasNumberOptions): number;
 ```
 
 ### 7.2 Segédfüggvények
@@ -629,7 +653,7 @@ const HIGH_K = '\u{10CD2}'; // eK (magas/rombusz K)
 | `42` | IIII + X + II |
 | `100` | C |
 | `1253` | M + II + C + L + III |
-| `2026` | II + M + X + X + V + I |
+| `2026` | II + M + II + X + V + I (az implementáció tényleges, 2026 értékű alakja) |
 
 #### 9.1.4 Idegen betűk
 
@@ -672,8 +696,11 @@ const HIGH_K = '\u{10CD2}'; // eK (magas/rombusz K)
 | Csak számok | `"12345"` | Rovás számjegyek |
 | Ismeretlen karakter | `"@#$"` | Törlés (üres kimenet) |
 | Vegyes szöveg | `"2026 tavaszán"` | Szám konverzió + betű konverzió |
-| Nagyon hosszú szám | `"123456789"` | Rovás számjegyek (9 jegyig) |
-| 10+ jegyű szám | `"1234567890"` | Első 9 jegy konvertálva, a 10. figyelmen kívül hagyva |
+| Millió | `"1000000"` | M + M; visszafejtve 1000000 |
+| Milliárd | `"1000000000"` | M + M + M; visszafejtve 1000000000 |
+| Ezresolvasás kapcsoló | MM | alapértelmezés: 1000000; additive: 2000 |
+| Additív írás | `"1000000"`, additive | I + M + M; visszafejtve 1000000 |
+| Biztonságos egész felett | `"9007199254740992"` | RangeError (nincs csonkítás) |
 
 ---
 

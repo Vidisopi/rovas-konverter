@@ -2,6 +2,7 @@
  * Rovás Konverter Konfiguráció
  * Spec: 6. fejezet - Konfigurációs opciók
  */
+import { ThousandsMode } from './converters/numbers.js';
 export interface RovasConverterConfig {
     /** Hangrendiség-alapú K-választás (mély vs magas K) */
     useVowelHarmonyK: boolean;
@@ -9,6 +10,8 @@ export interface RovasConverterConfig {
     useCapitals: boolean;
     /** Írásirány */
     direction: 'rtl' | 'ltr';
+    /** Ezresjelek olvasása és nagyszám-írása; alapértelmezés: multiplicative */
+    thousandsMode: ThousandsMode;
     /** QWXY kezelési mód */
     foreignLetterMode: 'ligature' | 'decompose';
 }
