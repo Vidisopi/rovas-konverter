@@ -1,118 +1,112 @@
 /**
- * Rovás Konverter - Inverz konverziós tábla (Rovás → Latin)
- * Spec: 5.1, 5.2
- *
- * Ez a tábla a 3.1–3.6 táblázatok inverze.
- * Minden Unicode rovás kódpontra pontosan egy latin megfelelő van.
- */
-/**
- * Rovás kódpont → latin karakter/betűkapcsolat
- * Spec: 5.2 - Inverz karaktertábla
+ * Rovás → latin tábla a Unicode 17 Old Hungarian nevek szerint.
+ * A bogárjelek nincsenek itt: az olvasatuk a konfigurációtól függ.
  */
 export const ROVAS_TO_LATIN = {
-    // === Magánhangzók (kisbetűs rovás) ===
-    // Spec: 3.1 táblázat
-    '\u{10CC0}': 'a', // A
-    '\u{10CC1}': 'á', // AA
-    '\u{10CC8}': 'e', // E (nyílt)
-    '\u{10CC9}': 'e', // E (zárt) → 'e' (Spec: 5.2 - megkülönböztetés elvész)
-    '\u{10CCA}': 'é', // É
-    '\u{10CCE}': 'i', // I
-    '\u{10CCF}': 'í', // II
-    '\u{10CD6}': 'o', // O
-    '\u{10CD7}': 'ó', // OO
-    '\u{10CD8}': 'ö', // Ö
-    '\u{10CD9}': 'ő', // ŐŰ
-    '\u{10CDE}': 'u', // U
-    '\u{10CDF}': 'ú', // UU
-    '\u{10CE0}': 'ü', // Ü
-    '\u{10CE1}': 'ű', // ŰŐ
-    // === Mássalhangzók (kisbetűs rovás) ===
-    // Spec: 3.2 táblázat
-    '\u{10CC2}': 'b', // eB
-    '\u{10CC4}': 'c', // eC
-    '\u{10CC6}': 'cs', // eCS
-    '\u{10CC7}': 'd', // eD
-    '\u{10CCB}': 'f', // eF
-    '\u{10CCC}': 'g', // eG
-    '\u{10CCD}': 'gy', // eGY
-    '\u{10CD0}': 'h', // eH
-    '\u{10CD1}': 'j', // eJ
-    '\u{10CD2}': 'k', // eK (magas K) → 'k' (Spec: 5.2)
-    '\u{10CD3}': 'k', // aK (mély K) → 'k' (Spec: 5.2 - hangrendiség info elvész)
-    '\u{10CD4}': 'l', // eL
-    '\u{10CD5}': 'ly', // eLY
-    '\u{10CDA}': 'm', // eM
-    '\u{10CDB}': 'n', // eN
-    '\u{10CDC}': 'ny', // eNY
-    '\u{10CDD}': 'p', // eP
-    '\u{10CE2}': 'r', // eR
-    '\u{10CE4}': 's', // eS
-    '\u{10CE6}': 'sz', // eSZ
-    '\u{10CE7}': 't', // eT
-    '\u{10CE8}': 'ty', // eTY
-    '\u{10CEE}': 'v', // eV
-    '\u{10CEF}': 'z', // eZ
-    '\u{10CF0}': 'zs', // eZS
-    // === Nagybetűs rovás kódpontok → latin nagybetű ===
-    // Spec: 5.2 - "Nagybetűs rovás kódpontok → latin nagybetű"
-    '\u{10C80}': 'A', // A (nagy)
-    '\u{10C81}': 'Á', // AA (nagy)
-    '\u{10C88}': 'E', // E nyílt (nagy)
-    '\u{10C89}': 'E', // E zárt (nagy)
-    '\u{10C8A}': 'É', // É (nagy)
-    '\u{10C8E}': 'I', // I (nagy)
-    '\u{10C8F}': 'Í', // II (nagy)
-    '\u{10C96}': 'O', // O (nagy)
-    '\u{10C97}': 'Ó', // OO (nagy)
-    '\u{10C98}': 'Ö', // Ö (nagy)
-    '\u{10C99}': 'Ő', // ŐŰ (nagy)
-    '\u{10C9E}': 'U', // U (nagy)
-    '\u{10C9F}': 'Ú', // UU (nagy)
-    '\u{10CA0}': 'Ü', // Ü (nagy)
-    '\u{10CA1}': 'Ű', // ŰŐ (nagy)
-    '\u{10C82}': 'B', // eB (nagy)
-    '\u{10C84}': 'C', // eC (nagy)
-    '\u{10C86}': 'Cs', // eCS (nagy)
-    '\u{10C87}': 'D', // eD (nagy)
-    '\u{10C8B}': 'F', // eF (nagy)
-    '\u{10C8C}': 'G', // eG (nagy)
-    '\u{10C8D}': 'Gy', // eGY (nagy)
-    '\u{10C90}': 'H', // eH (nagy)
-    '\u{10C91}': 'J', // eJ (nagy)
-    '\u{10C92}': 'K', // eK magas (nagy)
-    '\u{10C93}': 'K', // aK mély (nagy)
-    '\u{10C94}': 'L', // eL (nagy)
-    '\u{10C95}': 'Ly', // eLY (nagy)
-    '\u{10C9A}': 'M', // eM (nagy)
-    '\u{10C9B}': 'N', // eN (nagy)
-    '\u{10C9C}': 'Ny', // eNY (nagy)
-    '\u{10C9D}': 'P', // eP (nagy)
-    '\u{10CA2}': 'R', // eR (nagy)
-    '\u{10CA4}': 'S', // eS (nagy)
-    '\u{10CA6}': 'Sz', // eSZ (nagy)
-    '\u{10CA7}': 'T', // eT (nagy)
-    '\u{10CA8}': 'Ty', // eTY (nagy)
-    '\u{10CAE}': 'V', // eV (nagy)
-    '\u{10CAF}': 'Z', // eZ (nagy)
-    '\u{10CB0}': 'Zs', // eZS (nagy)
+    // Magánhangzók
+    '\u{10CC0}': 'a',
+    '\u{10CC1}': 'á',
+    '\u{10CC9}': 'e',
+    '\u{10CCA}': 'e', // CLOSE E: a zárt/nyílt különbség a latin oldalon elvész
+    '\u{10CCB}': 'é',
+    '\u{10CD0}': 'i',
+    '\u{10CD1}': 'í',
+    '\u{10CDB}': 'o',
+    '\u{10CDC}': 'ó',
+    '\u{10CDD}': 'ö', // NIKOLSBURG OE
+    '\u{10CDE}': 'ö', // RUDIMENTA OE
+    '\u{10CDF}': 'ő', // OEE
+    '\u{10CEA}': 'u',
+    '\u{10CEB}': 'ú',
+    '\u{10CED}': 'ü', // RUDIMENTA UE
+    '\u{10CEC}': 'ű', // NIKOLSBURG UE, Forrai ű
+    // Mássalhangzók
+    '\u{10CC2}': 'b',
+    '\u{10CC4}': 'c',
+    '\u{10CC6}': 'cs',
+    '\u{10CC7}': 'd',
+    '\u{10CCC}': 'f',
+    '\u{10CCD}': 'g',
+    '\u{10CCE}': 'gy',
+    '\u{10CCF}': 'h',
+    '\u{10CD2}': 'j',
+    '\u{10CD3}': 'k', // EK
+    '\u{10CD4}': 'k', // AK
+    '\u{10CD6}': 'l',
+    '\u{10CD7}': 'ly',
+    '\u{10CD8}': 'm',
+    '\u{10CD9}': 'n',
+    '\u{10CDA}': 'ny',
+    '\u{10CE0}': 'p',
+    '\u{10CE2}': 'r',
+    '\u{10CE3}': 'r', // SHORT ER: az r alakváltozata
+    '\u{10CE4}': 's',
+    '\u{10CE5}': 'sz',
+    '\u{10CE6}': 't',
+    '\u{10CE8}': 'ty',
+    '\u{10CEE}': 'v',
+    '\u{10CEF}': 'z',
+    '\u{10CF0}': 'zs',
+    // Nagybetűk
+    '\u{10C80}': 'A',
+    '\u{10C81}': 'Á',
+    '\u{10C89}': 'E',
+    '\u{10C8A}': 'E',
+    '\u{10C8B}': 'É',
+    '\u{10C90}': 'I',
+    '\u{10C91}': 'Í',
+    '\u{10C9B}': 'O',
+    '\u{10C9C}': 'Ó',
+    '\u{10C9D}': 'Ö',
+    '\u{10C9E}': 'Ö',
+    '\u{10C9F}': 'Ő',
+    '\u{10CAA}': 'U',
+    '\u{10CAB}': 'Ú',
+    '\u{10CAD}': 'Ü',
+    '\u{10CAC}': 'Ű',
+    '\u{10C82}': 'B',
+    '\u{10C84}': 'C',
+    '\u{10C86}': 'Cs',
+    '\u{10C87}': 'D',
+    '\u{10C8C}': 'F',
+    '\u{10C8D}': 'G',
+    '\u{10C8E}': 'Gy',
+    '\u{10C8F}': 'H',
+    '\u{10C92}': 'J',
+    '\u{10C93}': 'K',
+    '\u{10C94}': 'K',
+    '\u{10C96}': 'L',
+    '\u{10C97}': 'Ly',
+    '\u{10C98}': 'M',
+    '\u{10C99}': 'N',
+    '\u{10C9A}': 'Ny',
+    '\u{10CA0}': 'P',
+    '\u{10CA2}': 'R',
+    '\u{10CA3}': 'R',
+    '\u{10CA4}': 'S',
+    '\u{10CA5}': 'Sz',
+    '\u{10CA6}': 'T',
+    '\u{10CA8}': 'Ty',
+    '\u{10CAE}': 'V',
+    '\u{10CAF}': 'Z',
+    '\u{10CB0}': 'Zs',
 };
+
 /**
- * ZWJ ligatúrák → latin megfelelők
- * Spec: 3.3, 5.2
- * Ezeket a ZWJ-t tartalmazó kódpont-sorozatokat ELŐBB kell keresni,
- * mint az egyszerű kódpontokat.
+ * ZWJ-s idegenbetű-ligatúrák. Ezek nem bogárjelek:
+ * az n+ZWJ+t sor nem az ENT karakter.
  */
 export const ROVAS_LIGATURES_TO_LATIN = {
-    // Idegen betű ligatúrák - Spec: 3.3
-    '\u{10CC7}\u200D\u{10CF0}': 'dzs', // DZS (D+ZWJ+ZS)
-    '\u{10CC7}\u200D\u{10CEF}': 'dz', // DZ (D+ZWJ+Z)
-    '\u{10CD3}\u200D\u{10CEE}': 'q', // Q (K+ZWJ+V)
-    '\u{10CEE}\u200D\u{10CEE}': 'w', // W (V+ZWJ+V)
-    '\u{10CD3}\u200D\u{10CE6}': 'x', // X (K+ZWJ+SZ)
-    '\u{10CCE}\u200D\u{10CD1}': 'y', // Y (I+ZWJ+J)
-    // Nagybetűs változatok (ha léteznek)
-    '\u{10C87}\u200D\u{10CB0}': 'Dzs', // DZS nagy
-    '\u{10C87}\u200D\u{10CAF}': 'Dz', // DZ nagy
+    '\u{10CC7}\u200D\u{10CF0}': 'dzs',
+    '\u{10CC7}\u200D\u{10CEF}': 'dz',
+    '\u{10CD3}\u200D\u{10CEE}': 'q',
+    '\u{10CEE}\u200D\u{10CEE}': 'w',
+    '\u{10CD3}\u200D\u{10CE5}': 'x',
+    '\u{10CD0}\u200D\u{10CD2}': 'y',
+    '\u{10C87}\u200D\u{10CB0}': 'Dzs',
+    '\u{10C87}\u200D\u{10CAF}': 'Dz',
+    '\u{10C93}\u200D\u{10CAE}': 'Q',
+    '\u{10CAE}\u200D\u{10CAE}': 'W',
+    '\u{10C93}\u200D\u{10CA5}': 'X',
+    '\u{10C90}\u200D\u{10C92}': 'Y',
 };
-//# sourceMappingURL=inverse.js.map

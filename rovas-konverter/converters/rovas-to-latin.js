@@ -2,9 +2,11 @@
  * Rovás Konverter - Rovás → Latin konverter
  * Spec: 5.1 – 5.4
  */
+import { DEFAULT_CONFIG } from '../config.js';
 import { ROVAS_TO_LATIN, ROVAS_LIGATURES_TO_LATIN } from '../tables/inverse.js';
 import { ROVAS_TO_PUNCTUATION } from '../tables/punctuation.js';
 import { ROVAS_DIGIT_SET } from '../tables/numbers.js';
+import { bugSignReverseMap, normalizeBugSignConfig } from '../tables/bugsigns.js';
 import { rovasToNumber } from './numbers.js';
 /**
  * ZWJ karakter
@@ -21,6 +23,8 @@ const ZWJ = '\u200D';
  * @returns Latin betűs magyar szöveg
  */
 export function rovasToLatin(text, config) {
+    const cfg = normalizeBugSignConfig({ ...DEFAULT_CONFIG, ...config });
+    const bugSigns = bugSignReverseMap(cfg);
     let result = '';
     // Surrogate pair-tudatos feldolgozás
     // Spec: 12.1 - "JavaScriptben surrogate pair-ekként jelennek meg"
@@ -47,7 +51,7 @@ export function rovasToLatin(text, config) {
                 numChars += chars[i];
                 i++;
             }
-            const num = rovasToNumber(numChars, config);
+            const num = rovasToNumber(numChars, cfg);
             result += num.toString();
             continue;
         }
@@ -58,8 +62,16 @@ export function rovasToLatin(text, config) {
             i++;
             continue;
         }
+        // === Bogárjelek ===
+        // Az olvasat módtól függ. A bizonytalan ENT-alakú jel és az US
+        // alapból kimarad a térképből, ezért a karakter változatlan marad.
+        // Az n+ZWJ+t nem kerül ide: az a ligatúraág, és nem az ENT.
+        if (bugSigns.has(char)) {
+            result += bugSigns.get(char);
+            i++;
+            continue;
+        }
         // === Rovás betűk → latin ===
-        // Spec: 5.1 lépés 3 - "Minden Unicode kódpontra a latin megfelelőt keressük"
         if (char in ROVAS_TO_LATIN) {
             result += ROVAS_TO_LATIN[char];
             i++;
@@ -73,4 +85,3 @@ export function rovasToLatin(text, config) {
     return result;
 }
 export default rovasToLatin;
-//# sourceMappingURL=rovas-to-latin.js.map

@@ -2,9 +2,10 @@
  * Rovás Konverter - Latin → Rovás konverter
  * Spec: 4.1 – 4.11
  */
-import { DEFAULT_CONFIG, CHARS_TO_REMOVE } from '../config.js';
+import { DEFAULT_CONFIG, CHARS_TO_REMOVE, DEEP_K, DEEP_K_UPPER, HIGH_K_UPPER } from '../config.js';
 import { LATIN_TO_ROVAS, LATIN_TO_ROVAS_UPPER } from '../tables/letters.js';
 import { PUNCTUATION_TO_ROVAS, OPENING_QUOTE_ROVAS } from '../tables/punctuation.js';
+import { activeForwardBugSigns, normalizeBugSignConfig } from '../tables/bugsigns.js';
 import { arabicStringToRovas } from './numbers.js';
 import { selectK, extractWordForK } from './vowel-harmony.js';
 import { ARABIC_DIGITS } from '../utils/text-parser.js';
@@ -18,11 +19,11 @@ import { ARABIC_DIGITS } from '../utils/text-parser.js';
  * @returns Unicode Old Hungarian karaktersorozat
  */
 export function latinToRovas(text, config) {
-    const cfg = { ...DEFAULT_CONFIG, ...config };
-    // Spec: 4.1 lépés 1-2 - Kisbetűsítés, de az eredeti nagybetűket nyilvántartjuk
-    // a useCapitals módhoz
-    const originalText = text;
-    const lowerText = text.toLowerCase();
+    const cfg = normalizeBugSignConfig({ ...DEFAULT_CONFIG, ...config });
+    const bugRules = activeForwardBugSigns(cfg);
+    // NFC: az ékezetes betűk egy kódponton illeszkedjenek a táblára
+    const originalText = text.normalize('NFC');
+    const lowerText = originalText.toLowerCase();
     let result = '';
     let i = 0;
     while (i < lowerText.length) {
@@ -89,15 +90,28 @@ export function latinToRovas(text, config) {
             continue;
         }
         // === Mohó egyeztetés - leghosszabb egyezés keresése ===
-        // Spec: 4.2 - Feldolgozási prioritás (mohó egyeztetés)
-        // Az elválasztójel figyelembevételével: ha '|' van közte, megszakítja a kettős betűt
+        // A 3 betűnél hosszabb bogárjel-kulcs (tprus, temperius) a közönséges
+        // betűk előtt áll. A 2–3 betűs bogárjel nem írhatja felül a cs/sz/gy
+        // táblát, és nem nyúlhat bele egy kettős betűbe.
+        const longBug = findBugSign(bugRules, lowerText, i, 4, Infinity);
+        if (longBug) {
+            result += applyBugSign(longBug, i, cfg, originalText);
+            i += longBug.latin.length;
+            continue;
+        }
         // 3 karakteres kulcsok (elválasztójellel megszakítva, ha szükséges)
-        // Spec: 4.5 - A | szétválasztja a kétjegyű mássalhangzókat
+        // A | szétválasztja a kétjegyű mássalhangzókat
         const chunk3 = getCharsIgnoringSeparator(lowerText, i, 3);
         if (chunk3.chars.length === 3 && chunk3.chars in LATIN_TO_ROVAS && !chunk3.hasSeparatorBefore2) {
             const convertedChar = handleChar(chunk3.chars, lowerText, i, cfg, originalText);
             result += convertedChar;
             i += chunk3.advance;
+            continue;
+        }
+        const bug3 = findBugSign(bugRules, lowerText, i, 3, 3);
+        if (bug3) {
+            result += applyBugSign(bug3, i, cfg, originalText);
+            i += bug3.latin.length;
             continue;
         }
         // 2 karakteres kulcsok
@@ -106,6 +120,12 @@ export function latinToRovas(text, config) {
             const convertedChar = handleChar(chunk2.chars, lowerText, i, cfg, originalText);
             result += convertedChar;
             i += chunk2.advance;
+            continue;
+        }
+        const bug2 = findBugSign(bugRules, lowerText, i, 2, 2);
+        if (bug2) {
+            result += applyBugSign(bug2, i, cfg, originalText);
+            i += bug2.latin.length;
             continue;
         }
         // 1 karakteres kulcsok
@@ -178,12 +198,57 @@ function applyCapitalization(rovasChar, latinKey, position, cfg, originalText) {
     const isUpperCase = origChar !== origChar.toLowerCase() && origChar === origChar.toUpperCase();
     if (!isUpperCase)
         return rovasChar;
-    // Megkeressük a nagybetűs rovás kódpontot
-    const baseKey = latinKey.length === 1 ? latinKey : latinKey; // pl. 'cs', 'gy'
-    const upperRovas = LATIN_TO_ROVAS_UPPER[baseKey];
-    if (upperRovas)
-        return upperRovas;
-    return rovasChar; // Ha nincs nagybetűs változat, marad a kisbetűs
+    // A hangrend szerint választott K-t a megfelelő nagybetű követi.
+    // A feloldott idegen betű nem cserélődik vissza ligatúrára.
+    if (latinKey === 'k') {
+        return rovasChar === DEEP_K ? DEEP_K_UPPER : HIGH_K_UPPER;
+    }
+    if (rovasChar === LATIN_TO_ROVAS[latinKey]) {
+        return LATIN_TO_ROVAS_UPPER[latinKey] ?? rovasChar;
+    }
+    return rovasChar;
+}
+/**
+ * Bekapcsolt bogárjel-szabály. A | és a kettős betű határa megszakítja.
+ */
+function findBugSign(rules, text, index, minLen, maxLen) {
+    for (const rule of rules) {
+        const len = rule.latin.length;
+        if (len < minLen || len > maxLen)
+            continue;
+        if (text.slice(index, index + len) !== rule.latin)
+            continue;
+        if (rule.latin in LATIN_TO_ROVAS)
+            continue;
+        if (overlapsStandardDigraph(text, index, len))
+            continue;
+        return rule;
+    }
+    return null;
+}
+/**
+ * A bogárjel ne nyelje le egy utána vagy benne kezdődő cs/sz/gy/… betű elejét.
+ * Így az „usz” sz-e megmarad, a „ponty” ty-ja is.
+ */
+function overlapsStandardDigraph(text, start, length) {
+    for (let i = start + 1; i < start + length; i++) {
+        const three = text.slice(i, i + 3);
+        const two = text.slice(i, i + 2);
+        if (three.length === 3 && three in LATIN_TO_ROVAS)
+            return true;
+        if (two.length === 2 && two in LATIN_TO_ROVAS)
+            return true;
+    }
+    return false;
+}
+function applyBugSign(rule, position, cfg, originalText) {
+    if (!cfg.useCapitals)
+        return rule.lower;
+    const orig = originalText[position];
+    if (!orig)
+        return rule.lower;
+    const isUpper = orig !== orig.toLowerCase() && orig === orig.toUpperCase();
+    return isUpper ? rule.upper : rule.lower;
 }
 /**
  * Elválasztójellel megszakított karakter-kinyerés
@@ -245,4 +310,3 @@ function _hasSeparatorBetween(text, start) {
 }
 // Export segédfüggvények (Spec: 7.2)
 export { latinToRovas as default };
-//# sourceMappingURL=latin-to-rovas.js.map
