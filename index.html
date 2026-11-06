@@ -346,24 +346,6 @@
       opacity: 1;
     }
 
-    /* Warning sáv */
-    .warning-bar {
-      margin-top: 0.75rem;
-      padding: 0.6rem 1rem;
-      background: rgba(251, 191, 36, 0.08);
-      border: 1px solid rgba(251, 191, 36, 0.3);
-      border-radius: 8px;
-      font-size: 0.82rem;
-      color: #fbbf24;
-      display: none;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .warning-bar.visible {
-      display: flex;
-    }
-
     /* Footer */
     footer {
       padding: 1rem 2rem;
@@ -415,6 +397,12 @@
         <span class="toggle-track"></span>
         <span class="toggle-label">Nagybetűk</span>
       </label>
+
+      <label class="toggle" title="Bekapcsolva: MM = 1000 × 1000. Kikapcsolva: a vezető MM = 1000 + 1000.">
+        <input type="checkbox" id="toggleThousandsMode" checked>
+        <span class="toggle-track"></span>
+        <span class="toggle-label">Ezresjelek szorzása (MM = 1 millió)</span>
+      </label>
     </div>
 
     <div class="divider"></div>
@@ -456,9 +444,6 @@
         <span class="char-count" id="outputCount">0 jel</span>
       </div>
       <div class="rovas-output empty" id="outputText">A kimenet itt jelenik meg</div>
-      <div class="warning-bar" id="warningBar">
-        ⚠️ A visszafejtés (rovás → szám) 1 000 000 felett nem megbízható. A megjelenített rovásjelek helyesek.
-      </div>
       <div class="action-bar">
         <button class="btn" onclick="copyOutput()">⎘ Másolás</button>
         <button class="btn btn-primary" onclick="copyCodepoints()">U+ Kódpontok</button>
@@ -469,7 +454,7 @@
 </main>
 
 <footer>
-  <p>SPEC v1.2 · Unicode Old Hungarian (U+10C80–U+10CFF) · 
+  <p>SPEC v1.3 · Unicode Old Hungarian (U+10C80–U+10CFF) ·
   Font: <a href="https://fonts.google.com/noto/specimen/Noto+Sans+Old+Hungarian" target="_blank">Noto Sans Old Hungarian</a></p>
 </footer>
 
@@ -489,7 +474,8 @@
     useVowelHarmonyK: false,
     useCapitals: false,
     foreignLetterMode: 'ligature',
-    direction: 'rtl'
+    direction: 'rtl',
+    thousandsMode: 'multiplicative'
   };
 
   let currentMode = 'latin-to-rovas';
@@ -499,13 +485,11 @@
     const input = document.getElementById('inputText').value;
     const output = document.getElementById('outputText');
     const count = document.getElementById('outputCount');
-    const warning = document.getElementById('warningBar');
 
     if (!input.trim()) {
       output.textContent = 'A kimenet itt jelenik meg';
       output.classList.add('empty');
       count.textContent = '0 jel';
-      warning.classList.remove('visible');
       return;
     }
 
@@ -514,16 +498,12 @@
       if (currentMode === 'latin-to-rovas') {
         result = latinToRovas(input, config);
       } else {
-        result = rovasToLatin(input);
+        result = rovasToLatin(input, config);
       }
 
       output.textContent = result;
       output.classList.remove('empty');
 
-      // Figyelmeztetés: szám > 1 000 000 a bemenetben?
-      const numbers = input.match(/\d+/g);
-      const hasLargeNumber = numbers && numbers.some(s => parseInt(s, 10) >= 1000000);
-      warning.classList.toggle('visible', currentMode === 'latin-to-rovas' && !!hasLargeNumber);
       output.style.fontFamily = currentMode === 'latin-to-rovas'
         ? "'Noto Sans Old Hungarian', serif"
         : "'Inter', sans-serif";
@@ -552,6 +532,11 @@
 
   document.getElementById('toggleCapitals').addEventListener('change', e => {
     config.useCapitals = e.target.checked;
+    convert();
+  });
+
+  document.getElementById('toggleThousandsMode').addEventListener('change', e => {
+    config.thousandsMode = e.target.checked ? 'multiplicative' : 'additive';
     convert();
   });
 

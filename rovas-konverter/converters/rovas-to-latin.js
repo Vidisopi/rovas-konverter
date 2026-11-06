@@ -17,9 +17,10 @@ const ZWJ = '\u200D';
  * Spec: 7.1 - rovasToLatin API
  *
  * @param text - Unicode Old Hungarian karaktersorozat
+ * @param config - Számolvasási opciók (thousandsMode)
  * @returns Latin betűs magyar szöveg
  */
-export function rovasToLatin(text) {
+export function rovasToLatin(text, config) {
     let result = '';
     // Surrogate pair-tudatos feldolgozás
     // Spec: 12.1 - "JavaScriptben surrogate pair-ekként jelennek meg"
@@ -46,7 +47,7 @@ export function rovasToLatin(text) {
                 numChars += chars[i];
                 i++;
             }
-            const num = rovasToNumber(numChars);
+            const num = rovasToNumber(numChars, config);
             result += num.toString();
             continue;
         }

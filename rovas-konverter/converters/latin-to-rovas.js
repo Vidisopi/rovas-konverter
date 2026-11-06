@@ -34,7 +34,7 @@ export function latinToRovas(text, config) {
                 numStr += lowerText[i];
                 i++;
             }
-            result += arabicStringToRovas(numStr);
+            result += arabicStringToRovas(numStr, cfg);
             continue;
         }
         // === Elválasztójel ===

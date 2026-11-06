@@ -8,8 +8,10 @@
  * Spec: 7.1 - rovasToLatin API
  *
  * @param text - Unicode Old Hungarian karaktersorozat
+ * @param config - A számjegyek thousandsMode olvasási beállítása
  * @returns Latin betűs magyar szöveg
  */
-export declare function rovasToLatin(text: string): string;
+import { RovasNumberOptions } from './numbers.js';
+export declare function rovasToLatin(text: string, config?: RovasNumberOptions): string;
 export default rovasToLatin;
 //# sourceMappingURL=rovas-to-latin.d.ts.map
